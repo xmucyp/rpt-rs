@@ -166,3 +166,77 @@ fn a_subreports_content_ignores_the_subreports_own_margins() {
     let (_, run) = runs(&doc, "SUBTEXT")[0];
     assert_eq!((run.bounds.left.0, run.bounds.top.0), (1100, 550));
 }
+
+#[test]
+fn new_page_before_does_not_break_before_the_report_body_begins() {
+    // A group header set to New Page Before prints its first group under the report header on
+    // page 1 (Crystal's SalesByCustomer-Grouped); later instances each start a page.
+    let mut report = tiny_report(15840);
+    report.report_definition.areas.insert(
+        0,
+        area(
+            AreaSectionKind::ReportHeader,
+            vec![section(
+                AreaSectionKind::ReportHeader,
+                "RH",
+                300,
+                vec![text_object("Title", "TITLE", 0)],
+            )],
+        ),
+    );
+    report.report_definition.areas[2].format.base.new_page_before = true; // the Detail area
+    let doc = rendered(&report, &numeric_rows(3));
+    assert_eq!(doc.pages.len(), 3, "a page per record, and no blank first page");
+    let first: Vec<&str> = doc.pages[0]
+        .ops
+        .iter()
+        .filter_map(|op| match op {
+            DrawOp::Text(t) => Some(t.text.as_str()),
+            _ => None,
+        })
+        .collect();
+    assert!(first.contains(&"TITLE") && first.contains(&"line"), "page 1: {first:?}");
+}
+
+#[test]
+fn a_fields_drop_shadow_is_drawn() {
+    let mut report = tiny_report(15840);
+    let obj = &mut report.report_definition.areas[1].sections[0].objects[0];
+    obj.border.top = LineStyle::SingleLine;
+    obj.border.bottom = LineStyle::SingleLine;
+    obj.border.left = LineStyle::SingleLine;
+    obj.border.right = LineStyle::SingleLine;
+    obj.border.has_drop_shadow = true;
+    let doc = rendered(&report, &numeric_rows(1));
+    let filled = doc.pages[0]
+        .ops
+        .iter()
+        .filter(|op| matches!(op, DrawOp::Rect(r) if r.fill.is_some() && r.stroke.is_none()))
+        .count();
+    assert_eq!(filled, 2, "a bar below and a bar to the right");
+}
+
+/// A text stack with real metrics (not the approximate one), so the requested family's own ascent
+/// decides the baseline.
+#[derive(Debug)]
+struct MeasuredLayout;
+
+impl rpt_pages::TextLayout for MeasuredLayout {
+    fn width_twips(&self, text: &str, font: &rpt_pages::FontSpec) -> f64 {
+        text.chars().count() as f64 * f64::from(font.size_pt) * 10.0
+    }
+}
+
+#[test]
+fn the_baseline_takes_the_requested_familys_ascent() {
+    // Verdana's ascent is 1.005 of its stored size, though a Liberation Sans face (0.905) draws it.
+    let font = |family: &str| rpt_pages::FontSpec {
+        family: family.to_string(),
+        size_pt: 10.0 * rpt_pages::gdi_cell_em_ratio(family),
+        ..rpt_pages::FontSpec::default()
+    };
+    let ascent = |family: &str| crate::text::crystal_ascent_twips(&MeasuredLayout, &font(family));
+    assert!((ascent("Verdana") - 201.07).abs() < 0.1, "1.00537 × 10pt × 20");
+    assert!((ascent("Arial") - 181.05).abs() < 0.1, "0.90527 × 10pt × 20");
+    assert_eq!(rpt_pages::gdi_ascent_ratio("Some Corporate Sans"), None);
+}

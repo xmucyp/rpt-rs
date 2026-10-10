@@ -394,7 +394,20 @@ fn resolve_run(
     } else {
         special_value(text, report, ctx, state)
     };
+    // A count — the page number, the page total, the record number — prints as a whole number
+    // ("Page 1"), not with the default two decimals a Number takes ("Page 1.00").
+    if !text.contains('(') && is_count_special(text) {
+        if let Value::Number(n) = value {
+            return format!("{}", n.round() as i64);
+        }
+    }
     render_value_default(&value, loc)
+}
+
+/// Whether a special field's value is a count, printed without decimals.
+fn is_count_special(name: &str) -> bool {
+    let key: String = name.chars().filter(|c| !c.is_whitespace()).collect::<String>().to_lowercase();
+    matches!(key.as_str(), "pagenumber" | "totalpagecount" | "recordnumber" | "groupnumber")
 }
 
 /// Stored conditional-format formula names, keyed exactly as `rpt-reader` decodes them from the record

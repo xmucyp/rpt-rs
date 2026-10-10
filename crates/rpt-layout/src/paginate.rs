@@ -351,12 +351,15 @@ impl<'a> Formatter<'a> {
             return false;
         }
         // NewPageBefore on this band, or a deferred NewPageAfter from the previous band, starts a
-        // fresh page — but not when we are already at the top of one (that would leave a blank page).
-        if (self.pending_page_break || self.bands.new_page_before(section)) && self.cursor_y > 0 {
+        // fresh page — but not when we are already at the top of one (that would leave a blank page),
+        // and NewPageBefore not before the report body has begun (see `body_started`).
+        let new_page_before = self.bands.new_page_before(section) && self.body_started;
+        if (self.pending_page_break || new_page_before) && self.cursor_y > 0 {
             self.finish_page();
             self.begin_page();
         }
         self.pending_page_break = false;
+        self.body_started = true;
 
         // Always resolve against a record: a band with none in scope (the report/page header/footer
         // of an empty dataset) still lays out its static skeleton, with field references falling to
@@ -422,7 +425,7 @@ impl<'a> Formatter<'a> {
             self.pending_page_break = true;
         }
         // ResetPageNumberAfter: restart the page-number counter at the next page top.
-        if section.format.base.reset_page_number_after {
+        if self.bands.reset_page_number_after(section) {
             self.pending_page_number_reset = true;
         }
         true
@@ -839,7 +842,8 @@ impl<'a> Formatter<'a> {
 
             // NewPageBefore on the detail section, or a break deferred from a prior band, starts a
             // fresh page before this record and resets the column cursor (mirrors `emit_band`).
-            let new_page_before = banded.iter().any(|(s, _, _)| self.bands.new_page_before(s));
+            let new_page_before =
+                self.body_started && banded.iter().any(|(s, _, _)| self.bands.new_page_before(s));
             // A "Records per page" cap breaks before the record it has no room for, exactly as in the
             // single-column path.
             if (self.pending_page_break || new_page_before || self.record_limit_reached())
@@ -850,6 +854,7 @@ impl<'a> Formatter<'a> {
                 cur.reset_to(self.cursor_y);
             }
             self.pending_page_break = false;
+            self.body_started = true;
 
             let record_top = if across {
                 self.place_across(&mut cur, rec_h)
@@ -893,7 +898,7 @@ impl<'a> Formatter<'a> {
             }
             if banded
                 .iter()
-                .any(|(s, _, _)| s.format.base.reset_page_number_after)
+                .any(|(s, _, _)| self.bands.reset_page_number_after(s))
             {
                 self.pending_page_number_reset = true;
             }

@@ -214,6 +214,32 @@ pub fn gdi_cell_em_ratio(family: &str) -> f32 {
     }
 }
 
+/// Where Crystal puts a line's baseline below its top, per point of the font's stored size:
+/// `usWinAscent / unitsPerEm` of the requested family (GDI's ascent for a cell-height font, measured
+/// at the stored size). `None` for a family whose metrics are not listed here; the caller then
+/// takes the ascent of the face that draws it. The values are read from the fonts' own files.
+///
+/// It matters where the substitute differs: Verdana's ascent is 1.005 of its size where the
+/// Liberation Sans drawing it has 0.905, a point at 10 pt.
+pub fn gdi_ascent_ratio(family: &str) -> Option<f32> {
+    let f = family.trim().to_ascii_lowercase();
+    Some(match f.as_str() {
+        "arial" | "liberation sans" | "helvetica" => 0.905_27,
+        "arial narrow" | "liberation sans narrow" => 0.921_88,
+        "arial black" => 1.100_59,
+        "times new roman" | "liberation serif" | "times" => 0.891_11,
+        "courier new" | "liberation mono" | "courier" => 0.832_52,
+        "microsoft sans serif" | "ms sans serif" => 0.921_88,
+        "verdana" => 1.005_37,
+        "tahoma" => 1.000_49,
+        "georgia" => 0.916_99,
+        "trebuchet ms" => 0.938_96,
+        "comic sans ms" => 1.102_05,
+        "impact" => 1.008_79,
+        _ => return None,
+    })
+}
+
 /// Line/border style (mirrors the SDK `LineStyle`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
 pub enum LineStyle {

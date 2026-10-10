@@ -278,6 +278,7 @@ struct AreaFlags {
     suppress: bool,
     new_page_before: bool,
     new_page_after: bool,
+    reset_page_number_after: bool,
 }
 
 impl Bands<'_> {
@@ -300,6 +301,12 @@ impl Bands<'_> {
     /// section.
     fn new_page_after(&self, s: &Section) -> bool {
         s.format.base.new_page_after || self.area_flags(s).new_page_after
+    }
+
+    /// Whether the page number restarts after `s`: its own Reset Page Number After, or its area's
+    /// on its last section.
+    fn reset_page_number_after(&self, s: &Section) -> bool {
+        s.format.base.reset_page_number_after || self.area_flags(s).reset_page_number_after
     }
 }
 
@@ -371,8 +378,13 @@ impl<'a> Bands<'a> {
                     suppress: base.suppress,
                     new_page_before: base.new_page_before && i == 0,
                     new_page_after: base.new_page_after && i == last,
+                    reset_page_number_after: base.reset_page_number_after && i == last,
                 };
-                if flags.suppress || flags.new_page_before || flags.new_page_after {
+                if flags.suppress
+                    || flags.new_page_before
+                    || flags.new_page_after
+                    || flags.reset_page_number_after
+                {
                     b.area_flags.insert(std::ptr::from_ref(*s), flags);
                 }
             }
@@ -477,6 +489,11 @@ pub(crate) struct Formatter<'a> {
     /// A `NewPageAfter` on a just-emitted section defers a page break to the next flow band (so a
     /// trailing `NewPageAfter` doesn't leave a blank page at the end of the report).
     pending_page_break: bool,
+    /// Whether any band of the report body (a group header or footer, a detail, the report footer)
+    /// has printed yet. Crystal honours New Page Before only once it has: a group header set to
+    /// start a new page prints its first group under the report header on page 1, while a report
+    /// footer set the same way, after the details, starts page 2.
+    body_started: bool,
     /// A `ResetPageNumberAfter` on a just-emitted section resets the page-number counter at the next
     /// page top (so the following page prints as page 1). `PageNumber`/`PageNofM` honour the reset;
     /// `TotalPageCount` stays the whole-document count (a per-reset-section total needs a second pass).
@@ -653,6 +670,7 @@ impl<'a> Formatter<'a> {
             assets: RefCell::new(BTreeMap::new()),
             sections: RefCell::new(crate::sections::SectionMap::from_report(report)),
             pending_page_break: false,
+            body_started: false,
             pending_page_number_reset: false,
             in_report_header: false,
             next_instance_id: 0,

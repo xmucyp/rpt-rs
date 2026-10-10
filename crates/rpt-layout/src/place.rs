@@ -1237,6 +1237,10 @@ impl Formatter<'_> {
                 .with_instance(instance),
         );
         let drawn = |s: RptLineStyle| !matches!(s, RptLineStyle::NoLine);
+        // A field or text object's drop shadow is drawn as a box's is, below and right of it.
+        if b.has_drop_shadow {
+            self.push_drop_shadow(rect, color, section_name, &obj.name, instance);
+        }
         if [b.top, b.bottom, b.left, b.right].into_iter().all(drawn) {
             self.push_op(DrawOp::Rect(RectOp {
                 bounds: rect,

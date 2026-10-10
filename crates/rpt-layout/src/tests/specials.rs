@@ -465,6 +465,30 @@ fn literal_runs_flatten_unchanged() {
     assert_eq!(texts, vec!["Numeric Code".to_string()]);
 }
 
+/// A page number embedded in a text object is a count and prints without decimals ("Page 1",
+/// as Crystal prints it), not as a two-decimal Number ("Page 1.00").
+#[test]
+fn an_embedded_page_number_prints_as_a_whole_number() {
+    let mut report = Report::default();
+    report.report_definition.areas = vec![area(
+        AreaSectionKind::PageFooter,
+        vec![section(
+            AreaSectionKind::PageFooter,
+            "PF",
+            300,
+            vec![run_text_object(
+                "Foot",
+                &[("Page ", None), ("PageNumber", Some("Page Number"))],
+                0,
+            )],
+        )],
+    )];
+    report.print_options.content_width = Twips(12240);
+    report.print_options.content_height = Twips(15840);
+    let texts = drawn_texts(&report, &numeric_rows(1));
+    assert!(texts.contains(&"Page 1".to_string()), "{texts:?}");
+}
+
 /// A `Page N of M` reference embedded in a page-footer text object is a forward reference like the
 /// placed field is: every page must end up carrying the final total, not the provisional one the
 /// single layout pass had when that page was closed.
