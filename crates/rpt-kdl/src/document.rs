@@ -140,6 +140,8 @@ fn page_node(po: &PrintOptions) -> Node {
         driver_name,
         port_name,
         margins,
+        // A render input, not a stored fact.
+        printer_default_margins: _,
         multi_column,
     } = po;
     let mut n = Node::new("page").prop_if(

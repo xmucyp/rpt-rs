@@ -40,18 +40,20 @@ pub(super) fn build_print_options(tree: &[RecordNode], logical: &[u8]) -> PrintO
     let sane = |v: Option<i32>| v.filter(|&x| (1..=1_000_000).contains(&x));
 
     // The page-setup record (0x66): the four margins in twips. A margin stored as i32::MIN
-    // (`0x80000000`) is the engine's "use default" sentinel and resolves to 360 twips (¼ inch).
+    // (`0x80000000`) is the engine's "use the printer's default" sentinel. It resolves to 360 twips
+    // (¼ inch, what Microsoft Print to PDF gives) and is remembered, so a render can substitute the
+    // margins of the printer it formats against (`PrintOptions::with_printer_margins`).
     if let Some(row) = read_first(tree, logical, &ft::PAGE_SETUP) {
         let margin = |name: &str| {
             let v = row.i(name);
-            Twips(if v == i32::MIN { 360 } else { v })
+            (Twips(if v == i32::MIN { 360 } else { v }), v == i32::MIN)
         };
-        opts.margins = crate::model::PageMargins {
-            left: margin("margin_left"),
-            right: margin("margin_right"),
-            top: margin("margin_top"),
-            bottom: margin("margin_bottom"),
-        };
+        let (left, l) = margin("margin_left");
+        let (right, r) = margin("margin_right");
+        let (top, t) = margin("margin_top");
+        let (bottom, b) = margin("margin_bottom");
+        opts.margins = crate::model::PageMargins { left, right, top, bottom };
+        opts.printer_default_margins = crate::model::MarginSides { left: l, right: r, top: t, bottom: b };
     }
 
     // The page DEVMODE (0x07): the printer's orientation, paper size, source and duplex.

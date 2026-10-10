@@ -91,6 +91,12 @@ pub struct PrintOptions {
     pub port_name: Option<String>,
     /// The page margins.
     pub margins: PageMargins,
+    /// Which of [`margins`](Self::margins) the report leaves to its printer ("use the printer's
+    /// default"). The reader resolves each of those to ¼ inch; [`PrintOptions::with_printer_margins`]
+    /// substitutes a particular printer's instead. A render input rather than a stored fact, so it
+    /// is not exported.
+    #[cfg_attr(feature = "serde", serde(skip))]
+    pub printer_default_margins: MarginSides,
     /// Multi-column detail layout ("Format with Multiple Columns"), or `None` for a single column.
     pub multi_column: Option<MultiColumn>,
 }
@@ -112,6 +118,52 @@ pub struct MultiColumn {
     /// Flow direction: `true` = fill across a row of columns then move down ("across then down");
     /// `false` = fill a column top-to-bottom then move to the next ("down then across").
     pub across_then_down: bool,
+}
+
+impl PrintOptions {
+    /// These options as formatted against a printer whose default page margins are `printer`.
+    ///
+    /// Crystal takes a margin the report leaves to its printer from the printer the report is
+    /// formatted against, so the same report sits differently on a laser printer (commonly a sixth
+    /// of an inch) than in Microsoft Print to PDF (a quarter). Only the sides in
+    /// [`printer_default_margins`](Self::printer_default_margins) change; a margin the report
+    /// stores is its own. The printable area shrinks or grows by the same amounts.
+    pub fn with_printer_margins(&self, printer: PageMargins) -> PrintOptions {
+        let mut out = self.clone();
+        let sides = self.printer_default_margins;
+        let take = |own: &mut Twips, theirs: Twips, from_printer: bool| -> i32 {
+            if !from_printer {
+                return 0;
+            }
+            let delta = theirs.0 - own.0;
+            *own = theirs;
+            delta
+        };
+        let dw = take(&mut out.margins.left, printer.left, sides.left)
+            + take(&mut out.margins.right, printer.right, sides.right);
+        let dh = take(&mut out.margins.top, printer.top, sides.top)
+            + take(&mut out.margins.bottom, printer.bottom, sides.bottom);
+        if out.content_width.0 > dw {
+            out.content_width = Twips(out.content_width.0 - dw);
+        }
+        if out.content_height.0 > dh {
+            out.content_height = Twips(out.content_height.0 - dh);
+        }
+        out
+    }
+}
+
+/// Which page margins a report leaves to its printer.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct MarginSides {
+    /// The left margin is the printer's.
+    pub left: bool,
+    /// The right margin is the printer's.
+    pub right: bool,
+    /// The top margin is the printer's.
+    pub top: bool,
+    /// The bottom margin is the printer's.
+    pub bottom: bool,
 }
 
 /// SDK: `IPageMargins`.

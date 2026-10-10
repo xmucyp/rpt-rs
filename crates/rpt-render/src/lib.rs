@@ -244,6 +244,13 @@ pub struct RenderOptions<'a> {
     /// ([`render_dataset_with`]), which brings whatever metrics source it was built on — the
     /// approximate layout reads no fonts at all.
     pub fonts: FontSource,
+    /// The default page margins of the printer the report is formatted against, applied to each
+    /// margin the report leaves to its printer (see [`PrintOptions::with_printer_margins`]). Crystal
+    /// takes those from the printer, so the same report sits differently on a laser printer than in
+    /// Microsoft Print to PDF. `None` keeps the reader's quarter inch.
+    ///
+    /// [`PrintOptions::with_printer_margins`]: rpt_reader::model::PrintOptions::with_printer_margins
+    pub printer_margins: Option<rpt_reader::model::PageMargins>,
 }
 
 impl std::fmt::Debug for RenderOptions<'_> {
@@ -255,6 +262,7 @@ impl std::fmt::Debug for RenderOptions<'_> {
             .field("scope", &self.scope.map(|_| "..").unwrap_or("None"))
             .field("as_of", &self.as_of)
             .field("fonts", &self.fonts)
+            .field("printer_margins", &self.printer_margins)
             .finish()
     }
 }
@@ -286,7 +294,20 @@ fn render_options(report: &Report, opts: RenderOptions) -> PagedDocument {
         scope,
         as_of,
         fonts,
+        printer_margins,
     } = opts;
+    // Formatting against a particular printer changes only the margins the report leaves to it.
+    let reformatted;
+    let report = match printer_margins {
+        Some(m) if report.print_options.printer_default_margins != Default::default() => {
+            reformatted = Report {
+                print_options: report.print_options.with_printer_margins(m),
+                ..report.clone()
+            };
+            &reformatted
+        }
+        _ => report,
+    };
     // Resolve the render's as-of instant once, so the record pipeline and the layout pass share a
     // single fixed value for `CurrentDate`/… (deterministic across the whole render).
     let as_of = as_of.unwrap_or_else(default_as_of);
