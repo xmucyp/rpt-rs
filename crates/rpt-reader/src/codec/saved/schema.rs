@@ -14,8 +14,11 @@ pub(crate) const MEMO_CELL_SIZE: u32 = 12;
 
 /// The byte budget a memo-descriptor batch fills: its row capacity (the IV's first
 /// word) is `DESC_BATCH_BYTE_BUDGET / item_size` (e.g. an item size of 72 gives a row capacity of
-/// 142).
-pub(crate) const DESC_BATCH_BYTE_BUDGET: u32 = 10224;
+/// 142, and a single memo column's 12-byte item gives 853). The budget is 10 KiB: the 24- to
+/// 72-byte items of the multi-memo reports cannot tell it from anything in `10236..=10247`, but a
+/// one-memo report's 12-byte batch only decrypts under a capacity of 853, which rules out the
+/// lower values.
+pub(crate) const DESC_BATCH_BYTE_BUDGET: u32 = 10240;
 
 /// The widest per-item record a directory entry is taken at its word for. A saved record is one
 /// fixed-width row of a database rowset, so an entry claiming more than this is a spurious match on
@@ -139,7 +142,7 @@ pub(crate) struct BatchShape {
     pub persistent: u32,
     /// The item-size word a record-index batch's IV is built from: the persistent width for a
     /// packed record, the on-disk width otherwise. The two differ only when string columns are
-    /// stored inline, so this is the on-disk width for every memo-heap report.
+    /// stored inline.
     pub index_iv_item: u32,
 }
 
@@ -158,7 +161,7 @@ impl BatchShape {
             memo_cols,
             desc_item: memo_cols * MEMO_CELL_SIZE,
             persistent,
-            index_iv_item: if memo_cols == 0 {
+            index_iv_item: if memo_cols == 0 || persistent > index_item {
                 persistent
             } else {
                 index_item
@@ -166,11 +169,12 @@ impl BatchShape {
         }
     }
 
-    /// Whether the record is **packed**: a memo-less record stores its string columns inline,
-    /// compacted per batch to that batch's own per-column maxima, so the on-disk record is narrower
-    /// than the in-memory one.
+    /// Whether the record is **packed**: its inline string columns are compacted per batch to that
+    /// batch's own per-column maxima, so the on-disk record is narrower than the in-memory one. A
+    /// record can be packed and still carry memo columns (a product catalog with an image blob
+    /// beside its inline names); those cells live in the memo heap either way.
     pub(crate) fn is_packed(&self) -> bool {
-        self.memo_cols == 0 && self.persistent > self.index_item
+        self.persistent > self.index_item
     }
 }
 

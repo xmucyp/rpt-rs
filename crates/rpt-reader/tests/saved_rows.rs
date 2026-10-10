@@ -101,7 +101,7 @@ fn the_directory_record_count_agrees_with_the_decoded_rows() {
 /// A report whose rows span **several** batches, pinned exactly.
 ///
 /// Its 249 rows sit in one record-index batch but two memo-descriptor batches, 170 + 79. The 170 is
-/// not a property of the data: a descriptor batch holds `10224 / item_size` rows (a fixed byte
+/// not a property of the data: a descriptor batch holds `10240 / item_size` rows (a fixed byte
 /// budget), which at this report's 60-byte descriptor is 170. A decoder that reads only a batch
 /// class's first batch therefore returns exactly 170 rows and silently drops the rest, which is the
 /// shape this fixture exists to catch — an equality, so the count cannot drift in either direction.

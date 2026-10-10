@@ -7,7 +7,7 @@
 
 use std::path::PathBuf;
 
-use rpt_reader::{BatchProblem, Rpt, SavedBatchKind, SavedDataStatus};
+use rpt_reader::{Rpt, SavedDataStatus};
 
 /// Every report of the corpus — discovered, not named, so a newly added tree is swept without
 /// anyone remembering this file exists.
@@ -75,33 +75,40 @@ fn coverage_is_specific_not_noisy_across_the_corpus() {
 }
 
 #[test]
-fn a_report_whose_saved_batch_will_not_decrypt_says_so() {
-    // The failure this names is invisible from the model alone: the report's descriptor claims 800
-    // stored rows and `saved_data()` returns nothing, which on its own is indistinguishable from a
-    // report saved without data.
+fn a_packed_report_with_a_memo_column_decodes_every_row() {
+    // This report stores its string columns packed inline *and* keeps an image blob in the memo
+    // heap. Its record-index batches are keyed on the in-memory record width (1940), not their
+    // on-disk widths (614 and 610), and its one-column descriptor batch holds 853 rows. Read as a
+    // plain memo record it lost every row behind a batch that would not decrypt.
     let f = corpus()
         .into_iter()
         .find(|f| f.file_name().is_some_and(|n| n == "02_product_catalog.rpt"))
         .expect("the committed product-catalog fixture is in the corpus");
     let rpt = Rpt::open(&f).expect("open");
     assert!(rpt.report().has_saved_data);
-    assert!(rpt.saved_data().is_none());
-
-    let status = rpt.saved_data_status();
+    let saved = rpt.saved_data().expect("the saved rows decode");
+    assert_eq!(saved.record_count, 800);
+    assert_eq!(saved.rows.len(), 800);
     assert_eq!(
-        status,
-        SavedDataStatus::BatchUndecodable {
-            kind: SavedBatchKind::Index,
-            index: 0,
-            problem: BatchProblem::NotDecrypted,
-        },
-        "the reason the rows did not decode must survive the decode"
+        rpt.saved_data_status(),
+        SavedDataStatus::Decoded {
+            rows: 800,
+            stored: 800
+        }
     );
-    assert!(!status.is_complete());
-    let shortfall = status.shortfall().expect("a lost batch is a shortfall");
-    assert!(shortfall.contains("record-index batch #0"), "{shortfall}");
-    // And it reaches the one warning a caller is expected to read.
-    assert!(!rpt.decode_coverage().is_complete());
+
+    // The first row, checked against the seed database it was saved from: inline strings from the
+    // packed slots, a scaled double, and the memo cell resolved from the heap (a PNG, so it reads as
+    // text only up to its first NUL).
+    let row = &saved.rows[0];
+    assert_eq!(row[0].as_deref(), Some("Compact Cartridge 393"));
+    assert_eq!(row[5].as_deref(), Some("SKU-000293"));
+    assert_eq!(row[6], None, "the seed's description is NULL");
+    assert_eq!(row[7].as_deref(), Some("24.34"));
+    assert_eq!(row[8].as_deref(), Some("JPY"));
+    assert!(row[11].as_deref().is_some_and(|s| s.starts_with('\u{5089}')));
+    assert_eq!(row[12].as_deref(), Some("Emerald Systems"));
+    assert!(rpt.decode_coverage().is_complete());
 }
 
 #[test]

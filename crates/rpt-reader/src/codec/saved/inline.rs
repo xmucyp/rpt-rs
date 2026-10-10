@@ -51,11 +51,7 @@ impl<'a> RowReader<'a> {
                 if f.is_memo {
                     let cell = cells.get(memo_i).copied();
                     memo_i += 1;
-                    cell.and_then(|c| {
-                        let o = u32::from_le_bytes([c[4], c[5], c[6], c[7]]) as usize;
-                        let l = u32::from_le_bytes([c[8], c[9], c[10], c[11]]) as usize;
-                        read_memo_cell(heap, o, l)
-                    })
+                    memo_value(cell, heap)
                 } else {
                     inline_cell(
                         idx_rec,
@@ -67,6 +63,16 @@ impl<'a> RowReader<'a> {
             })
             .collect()
     }
+}
+
+/// The memo value a descriptor cell `[u16 col][u16 flag][u32 heap_offset][u32 byte_length]` points
+/// at in `heap`; `None` for a missing cell or an empty value.
+pub(super) fn memo_value(cell: Option<&[u8]>, heap: &[u8]) -> Option<String> {
+    cell.and_then(|c| {
+        let o = u32::from_le_bytes([c[4], c[5], c[6], c[7]]) as usize;
+        let l = u32::from_le_bytes([c[8], c[9], c[10], c[11]]) as usize;
+        read_memo_cell(heap, o, l)
+    })
 }
 
 /// The on-disk width of an inline saved scalar, from its declared value type. `None` for a type

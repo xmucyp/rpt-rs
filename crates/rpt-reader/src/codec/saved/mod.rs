@@ -31,9 +31,9 @@ use crate::coverage::{BatchProblem, SavedDataStatus};
 use crate::model::{FieldValueType, SavedBatchKind};
 
 use decrypt::decode_batch_at;
-use inline::RowReader;
+use inline::{memo_value, RowReader};
 use memo::decode_memo_heaps;
-use packed::decode_packed_index;
+use packed::{decode_packed_index, PackedIndex};
 use schema::{BatchShape, DESC_BATCH_BYTE_BUDGET, INDEX_BATCH_SIZE, MEMO_CELL_SIZE};
 
 /// The stored rows a report's saved-data batches yielded, and why they are what they are.
@@ -128,7 +128,11 @@ pub(crate) fn decode_saved_rows(
     // each batch's own per-column maxima, so the on-disk widths live in the batch's directory entry
     // and batches of one report differ in `item_size`.
     if shape.is_packed() {
-        return decode_packed_index(catalog, srs_raw, field_types, shape.persistent as usize);
+        let index = decode_packed_index(catalog, srs_raw, field_types, &shape);
+        if shape.memo_cols == 0 {
+            return SavedRowset::walked(index.rows, index.record_count, index.problem);
+        }
+        return join_packed_memo_rows(catalog, srs_raw, memo_raw, &shape, index);
     }
 
     let index = read_index_records(srs_raw, &index_counts, &shape);
@@ -206,9 +210,8 @@ fn read_index_records(srs_raw: &[u8], counts: &[u32], shape: &BatchShape) -> Ind
     index
 }
 
-/// Read the rows of a record with memo columns: walk the memo-descriptor batches — the run that
-/// follows the record index in `SavedRecordsStream` — each paired with the memo-value heap at the
-/// same position, and join each descriptor record to its index record.
+/// Read the rows of a record with memo columns: join each memo-descriptor record to its fixed
+/// index record.
 fn read_memo_rows(
     catalog: &SavedCatalog,
     srs_raw: &[u8],
@@ -217,7 +220,77 @@ fn read_memo_rows(
     index: &IndexRecords,
     reader: &RowReader,
 ) -> SavedRowset {
-    let mut first_problem = index.problem;
+    let index_item = shape.index_item as usize;
+    let mut rows: Vec<Vec<Option<String>>> = Vec::new();
+    let problem = walk_memo_descriptors(
+        catalog,
+        srs_raw,
+        memo_raw,
+        shape,
+        index.cursor,
+        |global, cells, heap| {
+            let idx_rec = index
+                .records
+                .get(global * index_item..(global + 1) * index_item)
+                .unwrap_or(&[]);
+            rows.push(reader.row(idx_rec, cells, heap));
+        },
+    );
+    SavedRowset::walked(rows, index.record_count, index.problem.or(problem))
+}
+
+/// Complete the rows of a packed record that also has memo columns: its inline cells came out of
+/// the packed index, and each memo cell is replaced by the heap value its descriptor points at.
+///
+/// Only the rows a descriptor reached are kept, as on the fixed-record path. A row whose
+/// descriptor batch was lost has no memo value to show, and keeping it with a blank memo cell would
+/// make an undecoded value look like an empty one.
+fn join_packed_memo_rows(
+    catalog: &SavedCatalog,
+    srs_raw: &[u8],
+    memo_raw: &[u8],
+    shape: &BatchShape,
+    index: PackedIndex,
+) -> SavedRowset {
+    let schema = &catalog.fields;
+    let mut rows = index.rows;
+    let mut reached = 0usize;
+    let problem = walk_memo_descriptors(
+        catalog,
+        srs_raw,
+        memo_raw,
+        shape,
+        index.cursor,
+        |global, cells, heap| {
+            reached = global + 1;
+            let Some(row) = rows.get_mut(global) else {
+                return;
+            };
+            let mut memo_i = 0usize;
+            for (k, f) in schema.iter().enumerate() {
+                if f.is_memo {
+                    row[k] = memo_value(cells.get(memo_i).copied(), heap);
+                    memo_i += 1;
+                }
+            }
+        },
+    );
+    rows.truncate(reached);
+    SavedRowset::walked(rows, index.record_count, index.problem.or(problem))
+}
+
+/// Walk the memo-descriptor batches — the run that follows the record index in
+/// `SavedRecordsStream`, starting at `cursor` — each paired with the memo-value heap at the same
+/// position, calling `on_row` with each record's 0-based row number, its descriptor cells in
+/// memo-column order and its heap. Returns the first batch that would not decode.
+fn walk_memo_descriptors(
+    catalog: &SavedCatalog,
+    srs_raw: &[u8],
+    memo_raw: &[u8],
+    shape: &BatchShape,
+    mut cursor: usize,
+    mut on_row: impl FnMut(usize, &[&[u8]], &[u8]),
+) -> Option<SavedDataStatus> {
     let desc_counts: Vec<u32> = catalog
         .descriptors()
         .iter()
@@ -227,12 +300,11 @@ fn read_memo_rows(
     if desc_counts.is_empty() {
         // The record has memo columns, so every row's variable-length cells live behind a
         // descriptor batch that the directory does not list.
-        first_problem.get_or_insert(batch_failed(
+        return Some(batch_failed(
             SavedBatchKind::Descriptor,
             0,
             BatchProblem::Absent,
         ));
-        return SavedRowset::walked(Vec::new(), index.record_count, first_problem);
     }
     // Descriptor batches share one capacity — the rows that fit a fixed byte budget
     // (`DESC_BATCH_BYTE_BUDGET / item_size`), which is the IV's first word. A batch's own row count
@@ -240,60 +312,44 @@ fn read_memo_rows(
     let desc_cap = DESC_BATCH_BYTE_BUDGET / shape.desc_item;
     let heaps = decode_memo_heaps(memo_raw, shape.memo_cols);
     let desc_item = shape.desc_item as usize;
-    let index_item = shape.index_item as usize;
+    let cell = MEMO_CELL_SIZE as usize;
 
-    let mut rows: Vec<Vec<Option<String>>> = Vec::new();
-    let mut cursor = index.cursor;
     let mut global = 0usize;
     for (k, &c) in desc_counts.iter().enumerate() {
         let (inf, consumed) =
             match decode_batch_at(srs_raw, cursor, desc_cap, c, shape.desc_item, k as u32) {
                 Ok(batch) => batch,
-                Err(problem) => {
-                    first_problem.get_or_insert(batch_failed(
-                        SavedBatchKind::Descriptor,
-                        k,
-                        problem,
-                    ));
-                    break;
-                }
+                Err(problem) => return Some(batch_failed(SavedBatchKind::Descriptor, k, problem)),
             };
         cursor += consumed;
         let count = c as usize;
         let need = count * desc_item;
         let Some(hdr) = inf.len().checked_sub(need) else {
-            first_problem.get_or_insert(batch_failed(
+            return Some(batch_failed(
                 SavedBatchKind::Descriptor,
                 k,
                 BatchProblem::Short,
             ));
-            break;
         };
         // The k-th heap pairs 1:1 with the k-th descriptor batch, so a heap the memo stream did not
         // yield leaves this batch's cells pointing nowhere.
         let Some(heap) = heaps.get(k) else {
-            first_problem.get_or_insert(batch_failed(
+            return Some(batch_failed(
                 SavedBatchKind::MemoValue,
                 k,
                 BatchProblem::Absent,
             ));
-            break;
         };
         for r in 0..count {
             let drec = &inf[hdr + r * desc_item..hdr + (r + 1) * desc_item];
-            let cell = MEMO_CELL_SIZE as usize;
             let cells: Vec<&[u8]> = (0..shape.memo_cols as usize)
                 .map(|ci| &drec[ci * cell..ci * cell + cell])
                 .collect();
-            let idx_rec = index
-                .records
-                .get(global * index_item..(global + 1) * index_item)
-                .unwrap_or(&[]);
-            rows.push(reader.row(idx_rec, &cells, heap));
+            on_row(global, &cells, heap);
             global += 1;
         }
     }
-    SavedRowset::walked(rows, index.record_count, first_problem)
+    None
 }
 
 /// One batch's failure, as the status names it.

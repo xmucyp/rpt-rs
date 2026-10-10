@@ -1,13 +1,14 @@
-//! The packed-rowset decode: memo-less reports store their string columns inline, compacted per
-//! batch, so each index batch is decoded with its own on-disk `item_size` and per-column slot
-//! widths resolved from its directory entry's column table.
+//! The packed-rowset decode: a packed report stores its string columns inline, compacted per batch,
+//! so each index batch is decoded with its own on-disk `item_size` and per-column slot widths
+//! resolved from its directory entry's column table. Any memo columns are filled in afterwards from
+//! the memo heap.
 
 use crate::coverage::{BatchProblem, SavedDataStatus};
 use crate::model::{FieldValueType, SavedBatchKind};
 
 use super::decrypt::decode_batch_at;
-use super::schema::{SavedCatalog, SavedFieldDesc, INDEX_BATCH_SIZE, MAX_ITEM_SIZE};
-use super::{batch_failed, SavedRowset};
+use super::schema::{BatchShape, SavedCatalog, SavedFieldDesc, INDEX_BATCH_SIZE, MAX_ITEM_SIZE};
+use super::batch_failed;
 
 /// The widest inline buffer read as a scalar: a value type with no fixed native size is a scalar of
 /// its buffer's width up to this, and a string beyond it.
@@ -188,8 +189,10 @@ struct PackedBatchLayout {
 /// Restricted to the entries that chain contiguously through `SavedRecordsStream`. A memo-less
 /// report can still carry a trailing directory entry addressing `MemoValuesStream` — vestigial when
 /// that stream is absent — and it is not an index batch: taking it would add its `count` to the
-/// report's record total for rows that do not exist.
-fn packed_index_layouts(catalog: &SavedCatalog) -> Vec<PackedBatchLayout> {
+/// report's record total for rows that do not exist. A report with memo columns continues the same
+/// stream with its memo-descriptor batches (`item_size` = `desc_item`), so the run stops at the
+/// first of those.
+fn packed_index_layouts(catalog: &SavedCatalog, desc_item: u32) -> Vec<PackedBatchLayout> {
     let mut cursor = 0u32;
     catalog
         .batches
@@ -201,6 +204,7 @@ fn packed_index_layouts(catalog: &SavedCatalog) -> Vec<PackedBatchLayout> {
             cursor = cursor.saturating_add(b.desc.stream_len);
             chains
         })
+        .take_while(|b| desc_item == 0 || b.desc.item_size != desc_item)
         .filter(|b| b.desc.item_size > 0 && b.desc.item_size < MAX_ITEM_SIZE)
         .map(|b| PackedBatchLayout {
             count: b.desc.count,
@@ -290,14 +294,17 @@ fn packed_ondisk_layout(
 /// construction, so a batch that failed to decrypt would shrink both together and drop rows with no
 /// trace. Keeping the stored count independent leaves `rows.len() < record_count` as the signal, and
 /// the returned status names the batch that failed.
+///
+/// A memo column's cell is left as its inline slot reads; the caller replaces it from the memo heap.
 pub(crate) fn decode_packed_index(
     catalog: &SavedCatalog,
     srs_raw: &[u8],
     field_types: &[FieldValueType],
-    persistent: usize,
-) -> SavedRowset {
+    shape: &BatchShape,
+) -> PackedIndex {
     let schema = &catalog.fields;
-    let layouts = packed_index_layouts(catalog);
+    let persistent = shape.persistent as usize;
+    let layouts = packed_index_layouts(catalog, shape.desc_item);
     let record_count: u32 = layouts.iter().map(|l| l.count).sum();
     let mut first_problem: Option<SavedDataStatus> = None;
     let mut rows: Vec<Vec<Option<String>>> = Vec::new();
@@ -337,7 +344,24 @@ pub(crate) fn decode_packed_index(
             rows.push(decode_packed_record(rec, schema, &kinds, &widths, bitmap_w));
         }
     }
-    SavedRowset::walked(rows, record_count, first_problem)
+    PackedIndex {
+        rows,
+        record_count,
+        cursor,
+        problem: first_problem,
+    }
+}
+
+/// What the packed record-index batch run yielded.
+pub(crate) struct PackedIndex {
+    /// The decoded rows, in record order, each cell in schema order.
+    pub rows: Vec<Vec<Option<String>>>,
+    /// The row total the run's directory entries claim, independent of how many decoded.
+    pub record_count: u32,
+    /// Where the run left the ciphertext cursor — the offset the memo-descriptor batches begin at.
+    pub cursor: usize,
+    /// The first batch that would not decode.
+    pub problem: Option<SavedDataStatus>,
 }
 
 #[cfg(test)]
