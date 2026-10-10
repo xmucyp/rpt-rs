@@ -123,3 +123,45 @@ fn a_multi_batch_report_decodes_every_batch() {
         .collect();
     assert_eq!(alpha3.len(), 249, "the tail rows are not distinct values");
 }
+
+/// A subreport keeps its own saved rows under its `Subdocument N` storage, in the same format as the
+/// main report's. Crystal prints them: the Canadian-orders subreport lists ten customers built from
+/// these 127 rows.
+#[test]
+fn a_subreport_decodes_its_own_saved_rows() {
+    let path = rpt_test_support::fixture("tests/fixtures/reports/benbrahim777/Top5USAsubCanada.rpt");
+    let rpt = Rpt::open(&path).expect("open");
+    let sub = rpt
+        .report()
+        .subreports
+        .iter()
+        .find(|s| s.name == "CanadaOrders.rpt")
+        .expect("the Canadian orders subreport");
+    assert!(sub.report.has_saved_data);
+    let saved = sub.report.saved_data.as_ref().expect("its rows decode");
+    assert_eq!(saved.record_count, 127);
+    assert_eq!(saved.rows.len(), 127);
+    let names: Vec<&str> = saved.columns.iter().map(|c| c.name.as_str()).collect();
+    assert_eq!(names, ["Customer.Customer Name", "Customer.Country", "Orders.Order Amount"]);
+    assert!(saved.rows.iter().all(|r| r[1].as_deref() == Some("Canada")));
+}
+
+/// A report that leaves its margins to the printer reads a quarter inch on each side, remembers
+/// which sides those are, and can be formatted against another printer's margins instead.
+#[test]
+fn margins_left_to_the_printer_can_be_reformatted_for_another_printer() {
+    use rpt_reader::model::{PageMargins, Twips};
+    let path = rpt_test_support::fixture("tests/fixtures/reports/benbrahim777/BeforeTV.rpt");
+    let rpt = Rpt::open(&path).expect("open");
+    let po = &rpt.report().print_options;
+    let quarter = Twips(360);
+    assert_eq!(po.margins, PageMargins { left: quarter, right: quarter, top: quarter, bottom: quarter });
+    let sides = po.printer_default_margins;
+    assert!(sides.left && sides.right && sides.top && sides.bottom);
+
+    let sixth = Twips(240);
+    let laser = po.with_printer_margins(PageMargins { left: sixth, right: sixth, top: sixth, bottom: sixth });
+    assert_eq!(laser.margins.left, sixth);
+    assert_eq!(laser.content_width.0, po.content_width.0 + 240, "120 twips more on each side");
+    assert_eq!(laser.content_height.0, po.content_height.0 + 240);
+}

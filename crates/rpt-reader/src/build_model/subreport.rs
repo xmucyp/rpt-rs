@@ -253,13 +253,17 @@ pub(crate) fn build_subreports(
         // The saved current values are the report's, not the subreport's: they live in the single
         // top-level `ReportParametersStream` and are keyed by an index the whole report shares, so
         // a subreport's parameters resolve against the same map.
-        let report = super::build_report(
+        let mut report = super::build_report(
             Some(&contents),
             qe.as_ref(),
             prompt.as_ref(),
             current_values,
             None,
         );
+        // A subreport keeps its own saved rows under its storage — its own `DataSourceManager`
+        // catalog, `SavedRecordsStream` and `MemoValuesStream` — in the same format as the main
+        // report's, so they decode the same way once its database field types are raised.
+        report.saved_data = subreport_saved_data(&group, &report);
         let name = subreport_name_from_contents(&contents);
         names.insert(idx, name.clone());
         let prompt_xml = prompt
@@ -279,6 +283,31 @@ pub(crate) fn build_subreports(
         });
     }
     (out, names, meta)
+}
+
+/// Decode a subreport's saved rows from the streams of its own `Subdocument N` storage. The streams
+/// are named as at the top level with an index suffix (`DataSourceManager 1l`), so they are found by
+/// their leading word and classified as the top-level ones are.
+fn subreport_saved_data(
+    group: &[&LoadedStream],
+    report: &crate::model::Report,
+) -> Option<crate::model::SavedData> {
+    let stream = |word: &str, id: fn(String) -> StreamId| {
+        group.iter().find_map(|s| {
+            let name = s.path.file_name()?.to_str()?;
+            name.starts_with(word)
+                .then(|| RecordStream::decode(id(name.to_string()), &s.bytes))
+        })
+    };
+    let streams: Vec<RecordStream> = [
+        stream("DataSourceManager", StreamId::DataSourceManager),
+        stream("SavedRecordsStream", StreamId::SavedRecordsStream),
+        stream("MemoValuesStream", StreamId::MemoValuesStream),
+    ]
+    .into_iter()
+    .flatten()
+    .collect();
+    super::decode_saved_data(&streams, report).0
 }
 
 /// The subreport's friendly name: the document name its own `Subdocument`'s report-root record

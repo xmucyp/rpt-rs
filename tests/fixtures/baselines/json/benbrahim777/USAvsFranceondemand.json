@@ -14933,7 +14933,335 @@
               "value": "x86"
             }
           ],
-          "saved_data": null,
+          "saved_data": {
+            "columns": [
+              {
+                "name": "Customer.Customer Name",
+                "value_type": "String"
+              },
+              {
+                "name": "Customer.Country",
+                "value_type": "String"
+              },
+              {
+                "name": "Customer.Region",
+                "value_type": "String"
+              },
+              {
+                "name": "Orders.Order Amount",
+                "value_type": "Currency"
+              }
+            ],
+            "record_count": 51,
+            "rows": [
+              [
+                "Arsenault et Maurier",
+                "France",
+                "Auvergne",
+                "1739.85"
+              ],
+              [
+                "Auvergne Bicross",
+                "France",
+                "Auvergne",
+                "41.9"
+              ],
+              [
+                "Bicyclette Bourges Nord",
+                "France",
+                "Centre",
+                "1529.7"
+              ],
+              [
+                "Bicyclette du Nord",
+                "France",
+                "Nord Pas-de-Calais",
+                "1295.61"
+              ],
+              [
+                "BMX Orléans",
+                "France",
+                "Centre",
+                "659.7"
+              ],
+              [
+                "Bordeaux Sports",
+                "France",
+                "Aquitaine",
+                "2939.85"
+              ],
+              [
+                "Calais Cyclisme",
+                "France",
+                "Nord Pas-de-Calais",
+                "27"
+              ],
+              [
+                "Centre Poirot",
+                "France",
+                "Rhône-Alpes",
+                "27"
+              ],
+              [
+                "Centre Sportif Cherbourg",
+                "France",
+                "Haute Normandie",
+                "5879.7"
+              ],
+              [
+                "Centre Sportif Delormier",
+                "France",
+                "Lorraine",
+                "33.9"
+              ],
+              [
+                "Dijon Sud Vélos",
+                "France",
+                "Bourgogne",
+                "16.5"
+              ],
+              [
+                "France Sports",
+                "France",
+                "Basse Normandie",
+                "35.7"
+              ],
+              [
+                "Gagner Sports",
+                "France",
+                "Provence-Alpes-Côte d’Azur",
+                "1799.7"
+              ],
+              [
+                "La Place",
+                "France",
+                "Haute Normandie",
+                "125.7"
+              ],
+              [
+                "Lille VTT",
+                "France",
+                "Nord Pas-de-Calais",
+                "539.85"
+              ],
+              [
+                "Lourdes Sports",
+                "France",
+                "Aquitaine",
+                "107.8"
+              ],
+              [
+                "Mulhouse Vélos",
+                "France",
+                "Alsace",
+                "899.85"
+              ],
+              [
+                "Orléans VTT",
+                "France",
+                "Champagne-Ardenne",
+                "107.8"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "47"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "194.7"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "27"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "2694.79"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "3024.85"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "1530.42"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "36"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "8159.4"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "1079.7"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "43.8"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "23.5"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "161.7"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "106.3"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "2328.45"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "35.7"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "21.6"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "413.85"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "329.85"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "24"
+              ],
+              [
+                "Paris Mountain Sports",
+                "France",
+                "Ile de France",
+                "145.3"
+              ],
+              [
+                "Sports 4-Saisons",
+                "France",
+                "Nord Pas-de-Calais",
+                "107.8"
+              ],
+              [
+                "Sports Alsace",
+                "France",
+                "Alsace",
+                "1664.7"
+              ],
+              [
+                "Sports Beauchamp",
+                "France",
+                "Provence-Alpes-Côte d’Azur",
+                "431.87"
+              ],
+              [
+                "Sports Centre-ville",
+                "France",
+                "Languedoc-Roussillon",
+                "161.7"
+              ],
+              [
+                "Sports Fontainebleau",
+                "France",
+                "Île-de-France",
+                "161.7"
+              ],
+              [
+                "Sports France",
+                "France",
+                "Rhône-Alpes",
+                "5879.7"
+              ],
+              [
+                "Sud Cycles",
+                "France",
+                "Rhône-Alpes",
+                "832.35"
+              ],
+              [
+                "Toulouse Vélos",
+                "France",
+                "Midi-Pyrénées",
+                "832.35"
+              ],
+              [
+                "Vélos Basse Normandie",
+                "France",
+                "Basse Normandie",
+                "2497.05"
+              ],
+              [
+                "Vélos Bernard",
+                "France",
+                "Provence-Alpes-Côte d’Azur",
+                "2939.85"
+              ],
+              [
+                "Vélos Emile",
+                "France",
+                "Picardie",
+                "101.7"
+              ],
+              [
+                "Vélos Ferrier",
+                "France",
+                "Centre",
+                "1439.55"
+              ],
+              [
+                "VTT La Rochelle",
+                "France",
+                "Poitou Charentes",
+                "47"
+              ]
+            ]
+          },
           "subreports": [],
           "summary_info": {
             "author": "",
