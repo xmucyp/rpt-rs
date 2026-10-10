@@ -176,6 +176,44 @@ impl Default for FontSpec {
     }
 }
 
+/// The em a report's font is drawn at, per point of its stored size.
+///
+/// Crystal hands a font's point size to GDI as a positive `lfHeight`, which GDI reads as the
+/// height of the character **cell** (ascent plus descent), not the em. GDI then picks the em that
+/// makes the cell that tall, so the em is the stored size times `unitsPerEm / (usWinAscent +
+/// usWinDescent)`. Crystal's own PDF export shows it: a 10 pt Arial object is written at
+/// `8.95 Tf`. Drawing the stored size as the em makes every glyph about 11% too wide in Arial and
+/// 18% in Verdana.
+///
+/// The ratio is the requested family's own, read from its font file, because that is the font
+/// Crystal measured. Bold and italic share their family's metrics. A family not listed here is
+/// drawn by a bundled Liberation face of the same class, so it takes that face's ratio, which is
+/// also its Windows counterpart's: every common face's cell is taller than its em, and the
+/// substitute's ratio is closer than none.
+pub fn gdi_cell_em_ratio(family: &str) -> f32 {
+    let f = family.trim().to_ascii_lowercase();
+    match f.as_str() {
+        "arial" | "liberation sans" | "helvetica" => 0.895_10,
+        "arial narrow" | "liberation sans narrow" => 0.883_14,
+        "arial black" => 0.709_14,
+        "times new roman" | "liberation serif" | "times" => 0.903_00,
+        "courier new" | "liberation mono" | "courier" => 0.882_76,
+        "microsoft sans serif" | "ms sans serif" => 0.883_52,
+        "verdana" => 0.822_82,
+        "tahoma" => 0.828_48,
+        "georgia" => 0.880_10,
+        "trebuchet ms" => 0.861_23,
+        "comic sans ms" => 0.717_59,
+        "impact" => 0.819_86,
+        "calibri" => 0.819_20,
+        "cambria" => 0.852_98,
+        "dejavu sans" => 0.859_06,
+        _ if f.contains("mono") || f.contains("courier") => 0.882_76,
+        _ if f.contains("serif") && !f.contains("sans") => 0.903_00,
+        _ => 0.895_10,
+    }
+}
+
 /// Line/border style (mirrors the SDK `LineStyle`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Hash, Serialize, Deserialize)]
 pub enum LineStyle {

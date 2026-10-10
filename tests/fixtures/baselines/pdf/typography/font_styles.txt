@@ -19,7 +19,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 17.65 Tm
 [ (Regular: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -39,7 +39,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f1 14 Tf
+/f1 12.531 Tf
 1 0 0 -1 36 57.05 Tm
 [ (Bold: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -59,7 +59,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f2 14 Tf
+/f2 12.531 Tf
 1 0 0 -1 36 96.45 Tm
 [ (Italic: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -79,7 +79,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f3 14 Tf
+/f3 12.531 Tf
 1 0 0 -1 36 135.85 Tm
 [ (Bold+Italic: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -99,7 +99,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 175.25 Tm
 [ (Underline: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -107,10 +107,10 @@ Q
 q
 1 0 0 -1 36 599.6 cm
 0 0 0 rg
-36 176.09 m
-462.45 176.09 l
-462.45 176.93 l
-36 176.93 l
+36 176.002 m
+417.7 176.002 l
+417.7 176.754 l
+36 176.754 l
 h
 f
 Q
@@ -129,7 +129,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 214.65 Tm
 [ (Strikethrough: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -149,7 +149,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f1 14 Tf
+/f1 12.531 Tf
 1 0 0 -1 36 254.05 Tm
 [ (Underline+Bold: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -157,10 +157,10 @@ Q
 q
 1 0 0 -1 36 599.6 cm
 0 0 0 rg
-36 254.89 m
-529.6 254.89 l
-529.6 255.73 l
-36 255.73 l
+36 254.802 m
+477.8 254.802 l
+477.8 255.554 l
+36 255.554 l
 h
 f
 Q
@@ -179,7 +179,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f2 14 Tf
+/f2 12.531 Tf
 1 0 0 -1 36 293.45 Tm
 [ (Underline+Italic: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -187,10 +187,10 @@ Q
 q
 1 0 0 -1 36 599.6 cm
 0 0 0 rg
-36 294.29 m
-499.4 294.29 l
-499.4 295.13 l
-36 295.13 l
+36 294.202 m
+450.8 294.202 l
+450.8 294.954 l
+36 294.954 l
 h
 f
 Q
@@ -209,7 +209,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f2 14 Tf
+/f2 12.531 Tf
 1 0 0 -1 36 351.05 Tm
 [ (Strikethrough+Italic: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -229,38 +229,18 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f3 14 Tf
+/f3 12.531 Tf
 1 0 0 -1 36 408.65 Tm
-[ (Bold+Italic+Underline+Strike: The quick brown fox jumps over the lazy dog) ] TJ
+[ (Bold+Italic+Underline+Strike: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
 Q
 q
 1 0 0 -1 36 599.6 cm
 0 0 0 rg
-36 409.49 m
-535 409.49 l
-535 410.33 l
-36 410.33 l
-h
-f
-Q
-q
-1 0 0 -1 36 599.6 cm
-0 0 0 rg
-BT
-0 Tr
-/f3 14 Tf
-1 0 0 -1 36 424.75 Tm
-[ (0123456789) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 599.6 cm
-0 0 0 rg
-36 425.59 m
-113.85 425.59 l
-113.85 426.43 l
-36 426.43 l
+36 409.402 m
+555.85 409.402 l
+555.85 410.154 l
+36 410.154 l
 h
 f
 Q

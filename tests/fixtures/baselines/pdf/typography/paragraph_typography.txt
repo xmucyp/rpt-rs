@@ -16,7 +16,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 15.85 Tm
 [ (SingleSpacing \(LineSpacing=1.0, Multiple\).) ] TJ
 ET
@@ -26,9 +26,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 29.65 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 28.2 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore) ] TJ
 ET
 Q
 q
@@ -36,9 +36,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 43.45 Tm
-[ (et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 40.55 Tm
+[ (magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo) ] TJ
 ET
 Q
 q
@@ -46,9 +46,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 57.25 Tm
-[ (aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 52.9 Tm
+[ (consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -56,9 +56,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 71.05 Tm
-[ (dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 65.25 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore) ] TJ
 ET
 Q
 q
@@ -66,9 +66,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 84.85 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 77.6 Tm
+[ (magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo) ] TJ
 ET
 Q
 q
@@ -76,29 +76,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 98.65 Tm
-[ (et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 2062.6 cm
-0 0 0 rg
-BT
-0 Tr
-/f0 12 Tf
-1 0 0 -1 36 112.45 Tm
-[ (aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 2062.6 cm
-0 0 0 rg
-BT
-0 Tr
-/f0 12 Tf
-1 0 0 -1 36 126.25 Tm
-[ (dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 89.95 Tm
+[ (consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -116,7 +96,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 202.45 Tm
 [ (OneAndHalfSpacing \(LineSpacing=1.5, Multiple\).) ] TJ
 ET
@@ -126,9 +106,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 223.15 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 221 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore) ] TJ
 ET
 Q
 q
@@ -136,9 +116,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 243.85 Tm
-[ (et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 239.55 Tm
+[ (magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo) ] TJ
 ET
 Q
 q
@@ -146,9 +126,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 264.55 Tm
-[ (aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 258.1 Tm
+[ (consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -156,9 +136,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 285.25 Tm
-[ (dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 276.65 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore) ] TJ
 ET
 Q
 q
@@ -166,9 +146,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 305.95 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 295.2 Tm
+[ (magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo) ] TJ
 ET
 Q
 q
@@ -176,29 +156,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 326.65 Tm
-[ (et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 2062.6 cm
-0 0 0 rg
-BT
-0 Tr
-/f0 12 Tf
-1 0 0 -1 36 347.35 Tm
-[ (aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 2062.6 cm
-0 0 0 rg
-BT
-0 Tr
-/f0 12 Tf
-1 0 0 -1 36 368.05 Tm
-[ (dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 313.75 Tm
+[ (consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -216,7 +176,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 474.85 Tm
 [ (DoubleSpacing \(LineSpacing=2.0, Multiple\).) ] TJ
 ET
@@ -226,9 +186,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 502.45 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 499.55 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore) ] TJ
 ET
 Q
 q
@@ -236,9 +196,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 530.05 Tm
-[ (et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 524.25 Tm
+[ (magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo) ] TJ
 ET
 Q
 q
@@ -246,9 +206,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 557.65 Tm
-[ (aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 548.95 Tm
+[ (consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -256,9 +216,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 585.25 Tm
-[ (dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 573.65 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore) ] TJ
 ET
 Q
 q
@@ -266,9 +226,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 612.85 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 598.35 Tm
+[ (magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo) ] TJ
 ET
 Q
 q
@@ -276,29 +236,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 640.45 Tm
-[ (et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 2062.6 cm
-0 0 0 rg
-BT
-0 Tr
-/f0 12 Tf
-1 0 0 -1 36 668.05 Tm
-[ (aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 2062.6 cm
-0 0 0 rg
-BT
-0 Tr
-/f0 12 Tf
-1 0 0 -1 36 695.65 Tm
-[ (dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 623.05 Tm
+[ (consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -316,7 +256,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 72 833.05 Tm
 [ (FirstLineIndent \(720 twips = 0.5in\).) ] TJ
 ET
@@ -326,9 +266,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 846.85 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 845.4 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et) ] TJ
 ET
 Q
 q
@@ -336,9 +276,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 860.65 Tm
-[ (labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 857.75 Tm
+[ (dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea) ] TJ
 ET
 Q
 q
@@ -346,9 +286,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 874.45 Tm
-[ (nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 870.1 Tm
+[ (commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla) ] TJ
 ET
 Q
 q
@@ -356,9 +296,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 888.25 Tm
-[ (cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 882.45 Tm
+[ (pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -366,9 +306,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 902.05 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 894.8 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et) ] TJ
 ET
 Q
 q
@@ -376,9 +316,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 915.85 Tm
-[ (labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 907.15 Tm
+[ (dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea) ] TJ
 ET
 Q
 q
@@ -386,9 +326,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 929.65 Tm
-[ (nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 919.5 Tm
+[ (commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla) ] TJ
 ET
 Q
 q
@@ -396,9 +336,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 943.45 Tm
-[ (cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 931.85 Tm
+[ (pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -416,7 +356,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 108 1019.65 Tm
 [ (LeftIndent \(1440 twips = 1in\).) ] TJ
 ET
@@ -426,9 +366,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 108 1033.45 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 108 1032 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut) ] TJ
 ET
 Q
 q
@@ -436,9 +376,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 108 1047.25 Tm
-[ (incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 108 1044.35 Tm
+[ (labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris) ] TJ
 ET
 Q
 q
@@ -446,9 +386,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 108 1061.05 Tm
-[ (exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 108 1056.7 Tm
+[ (nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit) ] TJ
 ET
 Q
 q
@@ -456,9 +396,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 108 1074.85 Tm
-[ (dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 108 1069.05 Tm
+[ (esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -466,9 +406,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 108 1088.65 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 108 1081.4 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut) ] TJ
 ET
 Q
 q
@@ -476,9 +416,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 108 1102.45 Tm
-[ (incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 108 1093.75 Tm
+[ (labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris) ] TJ
 ET
 Q
 q
@@ -486,9 +426,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 108 1116.25 Tm
-[ (exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 108 1106.1 Tm
+[ (nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit) ] TJ
 ET
 Q
 q
@@ -496,9 +436,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 108 1130.05 Tm
-[ (dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 108 1118.45 Tm
+[ (esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -516,7 +456,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 72 1206.25 Tm
 [ (LeftAndRightIndent \(720 twips each side\).) ] TJ
 ET
@@ -526,9 +466,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 1220.05 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 1218.6 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut) ] TJ
 ET
 Q
 q
@@ -536,9 +476,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 1233.85 Tm
-[ (incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 1230.95 Tm
+[ (labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris) ] TJ
 ET
 Q
 q
@@ -546,9 +486,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 1247.65 Tm
-[ (exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 1243.3 Tm
+[ (nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit) ] TJ
 ET
 Q
 q
@@ -556,9 +496,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 1261.45 Tm
-[ (dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 1255.65 Tm
+[ (esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -566,9 +506,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 1275.25 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 1268 Tm
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut) ] TJ
 ET
 Q
 q
@@ -576,9 +516,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 1289.05 Tm
-[ (incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 1280.35 Tm
+[ (labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris) ] TJ
 ET
 Q
 q
@@ -586,9 +526,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 1302.85 Tm
-[ (exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 1292.7 Tm
+[ (nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit) ] TJ
 ET
 Q
 q
@@ -596,9 +536,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 72 1316.65 Tm
-[ (dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 72 1305.05 Tm
+[ (esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -616,9 +556,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 1392.85 Tm
-[ (C) -41.667 (h) -41.667 (a) -41.667 (r) -41.667 (a) -41.667 (c) -41.667 (t) -41.667 (e) -41.667 (r) -41.667 (S) -41.667 (p) -41.667 (a) -41.667 (c) -41.667 (i) -41.667 (n) -41.667 (g) -41.667 ( ) -41.667 (\() -41.667 (+) -41.667 (1) -41.667 (0) -41.667 ( ) -41.667 (t) -41.667 (w) -41.667 (i) -41.667 (p) -41.667 (s) -41.667 ( ) -41.667 (p) -41.667 (e) -41.667 (r) -41.667 ( ) -41.667 (c) -41.667 (h) -41.667 (a) -41.667 (r) -41.667 (\)) -41.667 (.) ] TJ
+[ (C) -46.55 (h) -46.55 (a) -46.55 (r) -46.55 (a) -46.55 (c) -46.55 (t) -46.55 (e) -46.55 (r) -46.55 (S) -46.55 (p) -46.55 (a) -46.55 (c) -46.55 (i) -46.55 (n) -46.55 (g) -46.55 ( ) -46.55 (\() -46.55 (+) -46.55 (1) -46.55 (0) -46.55 ( ) -46.55 (t) -46.55 (w) -46.55 (i) -46.55 (p) -46.55 (s) -46.55 ( ) -46.55 (p) -46.55 (e) -46.55 (r) -46.55 ( ) -46.55 (c) -46.55 (h) -46.55 (a) -46.55 (r) -46.55 (\)) -46.55 (.) ] TJ
 ET
 Q
 q
@@ -626,9 +566,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1406.65 Tm
-[ (L) -41.667 (o) -41.667 (r) -41.667 (e) -41.667 (m) -41.667 ( ) -41.667 (i) -41.667 (p) -41.667 (s) -41.667 (u) -41.667 (m) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 (l) -41.667 (o) -41.667 (r) -41.667 ( ) -41.667 (s) -41.667 (i) -41.667 (t) -41.667 ( ) -41.667 (a) -41.667 (m) -41.667 (e) -41.667 (t) -41.667 (,) -41.667 ( ) -41.667 (c) -41.667 (o) -41.667 (n) -41.667 (s) -41.667 (e) -41.667 (c) -41.667 (t) -41.667 (e) -41.667 (t) -41.667 (u) -41.667 (r) -41.667 ( ) -41.667 (a) -41.667 (d) -41.667 (i) -41.667 (p) -41.667 (i) -41.667 (s) -41.667 (c) -41.667 (i) -41.667 (n) -41.667 (g) -41.667 ( ) -41.667 (e) -41.667 (l) -41.667 (i) -41.667 (t) -41.667 (.) -41.667 ( ) -41.667 (S) -41.667 (e) -41.667 (d) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 ( ) -41.667 (e) -41.667 (i) -41.667 (u) -41.667 (s) -41.667 (m) -41.667 (o) -41.667 (d) -41.667 ( ) -41.667 (t) -41.667 (e) -41.667 (m) -41.667 (p) -41.667 (o) -41.667 (r) -41.667 ( ) -41.667 (i) -41.667 (n) -41.667 (c) -41.667 (i) -41.667 (d) -41.667 (i) -41.667 (d) -41.667 (u) -41.667 (n) -41.667 (t) -41.667 ( ) -41.667 (u) -41.667 (t) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1405.2 Tm
+[ (L) -46.55 (o) -46.55 (r) -46.55 (e) -46.55 (m) -46.55 ( ) -46.55 (i) -46.55 (p) -46.55 (s) -46.55 (u) -46.55 (m) -46.55 ( ) -46.55 (d) -46.55 (o) -46.55 (l) -46.55 (o) -46.55 (r) -46.55 ( ) -46.55 (s) -46.55 (i) -46.55 (t) -46.55 ( ) -46.55 (a) -46.55 (m) -46.55 (e) -46.55 (t) -46.55 (,) -46.55 ( ) -46.55 (c) -46.55 (o) -46.55 (n) -46.55 (s) -46.55 (e) -46.55 (c) -46.55 (t) -46.55 (e) -46.55 (t) -46.55 (u) -46.55 (r) -46.55 ( ) -46.55 (a) -46.55 (d) -46.55 (i) -46.55 (p) -46.55 (i) -46.55 (s) -46.55 (c) -46.55 (i) -46.55 (n) -46.55 (g) -46.55 ( ) -46.55 (e) -46.55 (l) -46.55 (i) -46.55 (t) -46.55 (.) -46.55 ( ) -46.55 (S) -46.55 (e) -46.55 (d) -46.55 ( ) -46.55 (d) -46.55 (o) -46.55 ( ) -46.55 (e) -46.55 (i) -46.55 (u) -46.55 (s) -46.55 (m) -46.55 (o) -46.55 (d) -46.55 ( ) -46.55 (t) -46.55 (e) -46.55 (m) -46.55 (p) -46.55 (o) -46.55 (r) -46.55 ( ) -46.55 (i) -46.55 (n) -46.55 (c) -46.55 (i) -46.55 (d) -46.55 (i) -46.55 (d) -46.55 (u) -46.55 (n) -46.55 (t) -46.55 ( ) -46.55 (u) -46.55 (t) -46.55 ( ) -46.55 (l) -46.55 (a) -46.55 (b) -46.55 (o) -46.55 (r) -46.55 (e) -46.55 ( ) -46.55 (e) -46.55 (t) ] TJ
 ET
 Q
 q
@@ -636,9 +576,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1420.45 Tm
-[ (l) -41.667 (a) -41.667 (b) -41.667 (o) -41.667 (r) -41.667 (e) -41.667 ( ) -41.667 (e) -41.667 (t) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 (l) -41.667 (o) -41.667 (r) -41.667 (e) -41.667 ( ) -41.667 (m) -41.667 (a) -41.667 (g) -41.667 (n) -41.667 (a) -41.667 ( ) -41.667 (a) -41.667 (l) -41.667 (i) -41.667 (q) -41.667 (u) -41.667 (a) -41.667 (.) -41.667 ( ) -41.667 (U) -41.667 (t) -41.667 ( ) -41.667 (e) -41.667 (n) -41.667 (i) -41.667 (m) -41.667 ( ) -41.667 (a) -41.667 (d) -41.667 ( ) -41.667 (m) -41.667 (i) -41.667 (n) -41.667 (i) -41.667 (m) -41.667 ( ) -41.667 (v) -41.667 (e) -41.667 (n) -41.667 (i) -41.667 (a) -41.667 (m) -41.667 (,) -41.667 ( ) -41.667 (q) -41.667 (u) -41.667 (i) -41.667 (s) -41.667 ( ) -41.667 (n) -41.667 (o) -41.667 (s) -41.667 (t) -41.667 (r) -41.667 (u) -41.667 (d) -41.667 ( ) -41.667 (e) -41.667 (x) -41.667 (e) -41.667 (r) -41.667 (c) -41.667 (i) -41.667 (t) -41.667 (a) -41.667 (t) -41.667 (i) -41.667 (o) -41.667 (n) -41.667 ( ) -41.667 (u) -41.667 (l) -41.667 (l) -41.667 (a) -41.667 (m) -41.667 (c) -41.667 (o) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1417.55 Tm
+[ (d) -46.55 (o) -46.55 (l) -46.55 (o) -46.55 (r) -46.55 (e) -46.55 ( ) -46.55 (m) -46.55 (a) -46.55 (g) -46.55 (n) -46.55 (a) -46.55 ( ) -46.55 (a) -46.55 (l) -46.55 (i) -46.55 (q) -46.55 (u) -46.55 (a) -46.55 (.) -46.55 ( ) -46.55 (U) -46.55 (t) -46.55 ( ) -46.55 (e) -46.55 (n) -46.55 (i) -46.55 (m) -46.55 ( ) -46.55 (a) -46.55 (d) -46.55 ( ) -46.55 (m) -46.55 (i) -46.55 (n) -46.55 (i) -46.55 (m) -46.55 ( ) -46.55 (v) -46.55 (e) -46.55 (n) -46.55 (i) -46.55 (a) -46.55 (m) -46.55 (,) -46.55 ( ) -46.55 (q) -46.55 (u) -46.55 (i) -46.55 (s) -46.55 ( ) -46.55 (n) -46.55 (o) -46.55 (s) -46.55 (t) -46.55 (r) -46.55 (u) -46.55 (d) -46.55 ( ) -46.55 (e) -46.55 (x) -46.55 (e) -46.55 (r) -46.55 (c) -46.55 (i) -46.55 (t) -46.55 (a) -46.55 (t) -46.55 (i) -46.55 (o) -46.55 (n) -46.55 ( ) -46.55 (u) -46.55 (l) -46.55 (l) -46.55 (a) -46.55 (m) -46.55 (c) -46.55 (o) -46.55 ( ) -46.55 (l) -46.55 (a) -46.55 (b) -46.55 (o) -46.55 (r) -46.55 (i) -46.55 (s) -46.55 ( ) -46.55 (n) -46.55 (i) -46.55 (s) -46.55 (i) -46.55 ( ) -46.55 (u) -46.55 (t) -46.55 ( ) -46.55 (a) -46.55 (l) -46.55 (i) -46.55 (q) -46.55 (u) -46.55 (i) -46.55 (p) ] TJ
 ET
 Q
 q
@@ -646,9 +586,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1434.25 Tm
-[ (l) -41.667 (a) -41.667 (b) -41.667 (o) -41.667 (r) -41.667 (i) -41.667 (s) -41.667 ( ) -41.667 (n) -41.667 (i) -41.667 (s) -41.667 (i) -41.667 ( ) -41.667 (u) -41.667 (t) -41.667 ( ) -41.667 (a) -41.667 (l) -41.667 (i) -41.667 (q) -41.667 (u) -41.667 (i) -41.667 (p) -41.667 ( ) -41.667 (e) -41.667 (x) -41.667 ( ) -41.667 (e) -41.667 (a) -41.667 ( ) -41.667 (c) -41.667 (o) -41.667 (m) -41.667 (m) -41.667 (o) -41.667 (d) -41.667 (o) -41.667 ( ) -41.667 (c) -41.667 (o) -41.667 (n) -41.667 (s) -41.667 (e) -41.667 (q) -41.667 (u) -41.667 (a) -41.667 (t) -41.667 (.) -41.667 ( ) -41.667 (D) -41.667 (u) -41.667 (i) -41.667 (s) -41.667 ( ) -41.667 (a) -41.667 (u) -41.667 (t) -41.667 (e) -41.667 ( ) -41.667 (i) -41.667 (r) -41.667 (u) -41.667 (r) -41.667 (e) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 (l) -41.667 (o) -41.667 (r) -41.667 ( ) -41.667 (i) -41.667 (n) -41.667 ( ) -41.667 (r) -41.667 (e) -41.667 (p) -41.667 (r) -41.667 (e) -41.667 (h) -41.667 (e) -41.667 (n) -41.667 (d) -41.667 (e) -41.667 (r) -41.667 (i) -41.667 (t) -41.667 ( ) -41.667 (i) -41.667 (n) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1429.9 Tm
+[ (e) -46.55 (x) -46.55 ( ) -46.55 (e) -46.55 (a) -46.55 ( ) -46.55 (c) -46.55 (o) -46.55 (m) -46.55 (m) -46.55 (o) -46.55 (d) -46.55 (o) -46.55 ( ) -46.55 (c) -46.55 (o) -46.55 (n) -46.55 (s) -46.55 (e) -46.55 (q) -46.55 (u) -46.55 (a) -46.55 (t) -46.55 (.) -46.55 ( ) -46.55 (D) -46.55 (u) -46.55 (i) -46.55 (s) -46.55 ( ) -46.55 (a) -46.55 (u) -46.55 (t) -46.55 (e) -46.55 ( ) -46.55 (i) -46.55 (r) -46.55 (u) -46.55 (r) -46.55 (e) -46.55 ( ) -46.55 (d) -46.55 (o) -46.55 (l) -46.55 (o) -46.55 (r) -46.55 ( ) -46.55 (i) -46.55 (n) -46.55 ( ) -46.55 (r) -46.55 (e) -46.55 (p) -46.55 (r) -46.55 (e) -46.55 (h) -46.55 (e) -46.55 (n) -46.55 (d) -46.55 (e) -46.55 (r) -46.55 (i) -46.55 (t) -46.55 ( ) -46.55 (i) -46.55 (n) -46.55 ( ) -46.55 (v) -46.55 (o) -46.55 (l) -46.55 (u) -46.55 (p) -46.55 (t) -46.55 (a) -46.55 (t) -46.55 (e) -46.55 ( ) -46.55 (v) -46.55 (e) -46.55 (l) -46.55 (i) -46.55 (t) -46.55 ( ) -46.55 (e) -46.55 (s) -46.55 (s) -46.55 (e) -46.55 ( ) -46.55 (c) -46.55 (i) -46.55 (l) -46.55 (l) -46.55 (u) -46.55 (m) -46.55 ( ) -46.55 (d) -46.55 (o) -46.55 (l) -46.55 (o) -46.55 (r) -46.55 (e) ] TJ
 ET
 Q
 q
@@ -656,9 +596,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1448.05 Tm
-[ (v) -41.667 (o) -41.667 (l) -41.667 (u) -41.667 (p) -41.667 (t) -41.667 (a) -41.667 (t) -41.667 (e) -41.667 ( ) -41.667 (v) -41.667 (e) -41.667 (l) -41.667 (i) -41.667 (t) -41.667 ( ) -41.667 (e) -41.667 (s) -41.667 (s) -41.667 (e) -41.667 ( ) -41.667 (c) -41.667 (i) -41.667 (l) -41.667 (l) -41.667 (u) -41.667 (m) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 (l) -41.667 (o) -41.667 (r) -41.667 (e) -41.667 ( ) -41.667 (e) -41.667 (u) -41.667 ( ) -41.667 (f) -41.667 (u) -41.667 (g) -41.667 (i) -41.667 (a) -41.667 (t) -41.667 ( ) -41.667 (n) -41.667 (u) -41.667 (l) -41.667 (l) -41.667 (a) -41.667 ( ) -41.667 (p) -41.667 (a) -41.667 (r) -41.667 (i) -41.667 (a) -41.667 (t) -41.667 (u) -41.667 (r) 13.509 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1442.25 Tm
+[ (e) -46.55 (u) -46.55 ( ) -46.55 (f) -46.55 (u) -46.55 (g) -46.55 (i) -46.55 (a) -46.55 (t) -46.55 ( ) -46.55 (n) -46.55 (u) -46.55 (l) -46.55 (l) -46.55 (a) -46.55 ( ) -46.55 (p) -46.55 (a) -46.55 (r) -46.55 (i) -46.55 (a) -46.55 (t) -46.55 (u) -46.55 (r) 8.626 (.) ] TJ
 ET
 Q
 q
@@ -666,9 +606,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1461.85 Tm
-[ (L) -41.667 (o) -41.667 (r) -41.667 (e) -41.667 (m) -41.667 ( ) -41.667 (i) -41.667 (p) -41.667 (s) -41.667 (u) -41.667 (m) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 (l) -41.667 (o) -41.667 (r) -41.667 ( ) -41.667 (s) -41.667 (i) -41.667 (t) -41.667 ( ) -41.667 (a) -41.667 (m) -41.667 (e) -41.667 (t) -41.667 (,) -41.667 ( ) -41.667 (c) -41.667 (o) -41.667 (n) -41.667 (s) -41.667 (e) -41.667 (c) -41.667 (t) -41.667 (e) -41.667 (t) -41.667 (u) -41.667 (r) -41.667 ( ) -41.667 (a) -41.667 (d) -41.667 (i) -41.667 (p) -41.667 (i) -41.667 (s) -41.667 (c) -41.667 (i) -41.667 (n) -41.667 (g) -41.667 ( ) -41.667 (e) -41.667 (l) -41.667 (i) -41.667 (t) -41.667 (.) -41.667 ( ) -41.667 (S) -41.667 (e) -41.667 (d) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 ( ) -41.667 (e) -41.667 (i) -41.667 (u) -41.667 (s) -41.667 (m) -41.667 (o) -41.667 (d) -41.667 ( ) -41.667 (t) -41.667 (e) -41.667 (m) -41.667 (p) -41.667 (o) -41.667 (r) -41.667 ( ) -41.667 (i) -41.667 (n) -41.667 (c) -41.667 (i) -41.667 (d) -41.667 (i) -41.667 (d) -41.667 (u) -41.667 (n) -41.667 (t) -41.667 ( ) -41.667 (u) -41.667 (t) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1454.6 Tm
+[ (L) -46.55 (o) -46.55 (r) -46.55 (e) -46.55 (m) -46.55 ( ) -46.55 (i) -46.55 (p) -46.55 (s) -46.55 (u) -46.55 (m) -46.55 ( ) -46.55 (d) -46.55 (o) -46.55 (l) -46.55 (o) -46.55 (r) -46.55 ( ) -46.55 (s) -46.55 (i) -46.55 (t) -46.55 ( ) -46.55 (a) -46.55 (m) -46.55 (e) -46.55 (t) -46.55 (,) -46.55 ( ) -46.55 (c) -46.55 (o) -46.55 (n) -46.55 (s) -46.55 (e) -46.55 (c) -46.55 (t) -46.55 (e) -46.55 (t) -46.55 (u) -46.55 (r) -46.55 ( ) -46.55 (a) -46.55 (d) -46.55 (i) -46.55 (p) -46.55 (i) -46.55 (s) -46.55 (c) -46.55 (i) -46.55 (n) -46.55 (g) -46.55 ( ) -46.55 (e) -46.55 (l) -46.55 (i) -46.55 (t) -46.55 (.) -46.55 ( ) -46.55 (S) -46.55 (e) -46.55 (d) -46.55 ( ) -46.55 (d) -46.55 (o) -46.55 ( ) -46.55 (e) -46.55 (i) -46.55 (u) -46.55 (s) -46.55 (m) -46.55 (o) -46.55 (d) -46.55 ( ) -46.55 (t) -46.55 (e) -46.55 (m) -46.55 (p) -46.55 (o) -46.55 (r) -46.55 ( ) -46.55 (i) -46.55 (n) -46.55 (c) -46.55 (i) -46.55 (d) -46.55 (i) -46.55 (d) -46.55 (u) -46.55 (n) -46.55 (t) -46.55 ( ) -46.55 (u) -46.55 (t) -46.55 ( ) -46.55 (l) -46.55 (a) -46.55 (b) -46.55 (o) -46.55 (r) -46.55 (e) -46.55 ( ) -46.55 (e) -46.55 (t) ] TJ
 ET
 Q
 q
@@ -676,9 +616,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1475.65 Tm
-[ (l) -41.667 (a) -41.667 (b) -41.667 (o) -41.667 (r) -41.667 (e) -41.667 ( ) -41.667 (e) -41.667 (t) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 (l) -41.667 (o) -41.667 (r) -41.667 (e) -41.667 ( ) -41.667 (m) -41.667 (a) -41.667 (g) -41.667 (n) -41.667 (a) -41.667 ( ) -41.667 (a) -41.667 (l) -41.667 (i) -41.667 (q) -41.667 (u) -41.667 (a) -41.667 (.) -41.667 ( ) -41.667 (U) -41.667 (t) -41.667 ( ) -41.667 (e) -41.667 (n) -41.667 (i) -41.667 (m) -41.667 ( ) -41.667 (a) -41.667 (d) -41.667 ( ) -41.667 (m) -41.667 (i) -41.667 (n) -41.667 (i) -41.667 (m) -41.667 ( ) -41.667 (v) -41.667 (e) -41.667 (n) -41.667 (i) -41.667 (a) -41.667 (m) -41.667 (,) -41.667 ( ) -41.667 (q) -41.667 (u) -41.667 (i) -41.667 (s) -41.667 ( ) -41.667 (n) -41.667 (o) -41.667 (s) -41.667 (t) -41.667 (r) -41.667 (u) -41.667 (d) -41.667 ( ) -41.667 (e) -41.667 (x) -41.667 (e) -41.667 (r) -41.667 (c) -41.667 (i) -41.667 (t) -41.667 (a) -41.667 (t) -41.667 (i) -41.667 (o) -41.667 (n) -41.667 ( ) -41.667 (u) -41.667 (l) -41.667 (l) -41.667 (a) -41.667 (m) -41.667 (c) -41.667 (o) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1466.95 Tm
+[ (d) -46.55 (o) -46.55 (l) -46.55 (o) -46.55 (r) -46.55 (e) -46.55 ( ) -46.55 (m) -46.55 (a) -46.55 (g) -46.55 (n) -46.55 (a) -46.55 ( ) -46.55 (a) -46.55 (l) -46.55 (i) -46.55 (q) -46.55 (u) -46.55 (a) -46.55 (.) -46.55 ( ) -46.55 (U) -46.55 (t) -46.55 ( ) -46.55 (e) -46.55 (n) -46.55 (i) -46.55 (m) -46.55 ( ) -46.55 (a) -46.55 (d) -46.55 ( ) -46.55 (m) -46.55 (i) -46.55 (n) -46.55 (i) -46.55 (m) -46.55 ( ) -46.55 (v) -46.55 (e) -46.55 (n) -46.55 (i) -46.55 (a) -46.55 (m) -46.55 (,) -46.55 ( ) -46.55 (q) -46.55 (u) -46.55 (i) -46.55 (s) -46.55 ( ) -46.55 (n) -46.55 (o) -46.55 (s) -46.55 (t) -46.55 (r) -46.55 (u) -46.55 (d) -46.55 ( ) -46.55 (e) -46.55 (x) -46.55 (e) -46.55 (r) -46.55 (c) -46.55 (i) -46.55 (t) -46.55 (a) -46.55 (t) -46.55 (i) -46.55 (o) -46.55 (n) -46.55 ( ) -46.55 (u) -46.55 (l) -46.55 (l) -46.55 (a) -46.55 (m) -46.55 (c) -46.55 (o) -46.55 ( ) -46.55 (l) -46.55 (a) -46.55 (b) -46.55 (o) -46.55 (r) -46.55 (i) -46.55 (s) -46.55 ( ) -46.55 (n) -46.55 (i) -46.55 (s) -46.55 (i) -46.55 ( ) -46.55 (u) -46.55 (t) -46.55 ( ) -46.55 (a) -46.55 (l) -46.55 (i) -46.55 (q) -46.55 (u) -46.55 (i) -46.55 (p) ] TJ
 ET
 Q
 q
@@ -686,9 +626,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1489.45 Tm
-[ (l) -41.667 (a) -41.667 (b) -41.667 (o) -41.667 (r) -41.667 (i) -41.667 (s) -41.667 ( ) -41.667 (n) -41.667 (i) -41.667 (s) -41.667 (i) -41.667 ( ) -41.667 (u) -41.667 (t) -41.667 ( ) -41.667 (a) -41.667 (l) -41.667 (i) -41.667 (q) -41.667 (u) -41.667 (i) -41.667 (p) -41.667 ( ) -41.667 (e) -41.667 (x) -41.667 ( ) -41.667 (e) -41.667 (a) -41.667 ( ) -41.667 (c) -41.667 (o) -41.667 (m) -41.667 (m) -41.667 (o) -41.667 (d) -41.667 (o) -41.667 ( ) -41.667 (c) -41.667 (o) -41.667 (n) -41.667 (s) -41.667 (e) -41.667 (q) -41.667 (u) -41.667 (a) -41.667 (t) -41.667 (.) -41.667 ( ) -41.667 (D) -41.667 (u) -41.667 (i) -41.667 (s) -41.667 ( ) -41.667 (a) -41.667 (u) -41.667 (t) -41.667 (e) -41.667 ( ) -41.667 (i) -41.667 (r) -41.667 (u) -41.667 (r) -41.667 (e) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 (l) -41.667 (o) -41.667 (r) -41.667 ( ) -41.667 (i) -41.667 (n) -41.667 ( ) -41.667 (r) -41.667 (e) -41.667 (p) -41.667 (r) -41.667 (e) -41.667 (h) -41.667 (e) -41.667 (n) -41.667 (d) -41.667 (e) -41.667 (r) -41.667 (i) -41.667 (t) -41.667 ( ) -41.667 (i) -41.667 (n) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1479.3 Tm
+[ (e) -46.55 (x) -46.55 ( ) -46.55 (e) -46.55 (a) -46.55 ( ) -46.55 (c) -46.55 (o) -46.55 (m) -46.55 (m) -46.55 (o) -46.55 (d) -46.55 (o) -46.55 ( ) -46.55 (c) -46.55 (o) -46.55 (n) -46.55 (s) -46.55 (e) -46.55 (q) -46.55 (u) -46.55 (a) -46.55 (t) -46.55 (.) -46.55 ( ) -46.55 (D) -46.55 (u) -46.55 (i) -46.55 (s) -46.55 ( ) -46.55 (a) -46.55 (u) -46.55 (t) -46.55 (e) -46.55 ( ) -46.55 (i) -46.55 (r) -46.55 (u) -46.55 (r) -46.55 (e) -46.55 ( ) -46.55 (d) -46.55 (o) -46.55 (l) -46.55 (o) -46.55 (r) -46.55 ( ) -46.55 (i) -46.55 (n) -46.55 ( ) -46.55 (r) -46.55 (e) -46.55 (p) -46.55 (r) -46.55 (e) -46.55 (h) -46.55 (e) -46.55 (n) -46.55 (d) -46.55 (e) -46.55 (r) -46.55 (i) -46.55 (t) -46.55 ( ) -46.55 (i) -46.55 (n) -46.55 ( ) -46.55 (v) -46.55 (o) -46.55 (l) -46.55 (u) -46.55 (p) -46.55 (t) -46.55 (a) -46.55 (t) -46.55 (e) -46.55 ( ) -46.55 (v) -46.55 (e) -46.55 (l) -46.55 (i) -46.55 (t) -46.55 ( ) -46.55 (e) -46.55 (s) -46.55 (s) -46.55 (e) -46.55 ( ) -46.55 (c) -46.55 (i) -46.55 (l) -46.55 (l) -46.55 (u) -46.55 (m) -46.55 ( ) -46.55 (d) -46.55 (o) -46.55 (l) -46.55 (o) -46.55 (r) -46.55 (e) ] TJ
 ET
 Q
 q
@@ -696,9 +636,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1503.25 Tm
-[ (v) -41.667 (o) -41.667 (l) -41.667 (u) -41.667 (p) -41.667 (t) -41.667 (a) -41.667 (t) -41.667 (e) -41.667 ( ) -41.667 (v) -41.667 (e) -41.667 (l) -41.667 (i) -41.667 (t) -41.667 ( ) -41.667 (e) -41.667 (s) -41.667 (s) -41.667 (e) -41.667 ( ) -41.667 (c) -41.667 (i) -41.667 (l) -41.667 (l) -41.667 (u) -41.667 (m) -41.667 ( ) -41.667 (d) -41.667 (o) -41.667 (l) -41.667 (o) -41.667 (r) -41.667 (e) -41.667 ( ) -41.667 (e) -41.667 (u) -41.667 ( ) -41.667 (f) -41.667 (u) -41.667 (g) -41.667 (i) -41.667 (a) -41.667 (t) -41.667 ( ) -41.667 (n) -41.667 (u) -41.667 (l) -41.667 (l) -41.667 (a) -41.667 ( ) -41.667 (p) -41.667 (a) -41.667 (r) -41.667 (i) -41.667 (a) -41.667 (t) -41.667 (u) -41.667 (r) 13.509 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1491.65 Tm
+[ (e) -46.55 (u) -46.55 ( ) -46.55 (f) -46.55 (u) -46.55 (g) -46.55 (i) -46.55 (a) -46.55 (t) -46.55 ( ) -46.55 (n) -46.55 (u) -46.55 (l) -46.55 (l) -46.55 (a) -46.55 ( ) -46.55 (p) -46.55 (a) -46.55 (r) -46.55 (i) -46.55 (a) -46.55 (t) -46.55 (u) -46.55 (r) 8.626 (.) ] TJ
 ET
 Q
 q
@@ -716,7 +656,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 1579.45 Tm
 [ (ExactLineSpacing \(LineSpacing=360 twips=18pt exact\).) ] TJ
 ET
@@ -726,9 +666,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 1597.45 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore) ] TJ
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore) ] TJ
 ET
 Q
 q
@@ -736,9 +676,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 1615.45 Tm
-[ (et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut) ] TJ
+[ (magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo) ] TJ
 ET
 Q
 q
@@ -746,9 +686,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 1633.45 Tm
-[ (aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum) ] TJ
+[ (consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -756,9 +696,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 1651.45 Tm
-[ (dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore) ] TJ
 ET
 Q
 q
@@ -766,9 +706,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 1669.45 Tm
-[ (Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore) ] TJ
+[ (magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo) ] TJ
 ET
 Q
 q
@@ -776,29 +716,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 1687.45 Tm
-[ (et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 2062.6 cm
-0 0 0 rg
-BT
-0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1705.45 Tm
-[ (aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 2062.6 cm
-0 0 0 rg
-BT
-0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1723.45 Tm
-[ (dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+[ (consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -816,9 +736,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
+/f0 10.741 Tf
 1 0 0 -1 36 1792.45 Tm
-[ (MixedSizes 12pt: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor) ] TJ
+[ (MixedSizes 12pt: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut) ] TJ
 ET
 Q
 q
@@ -826,9 +746,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1806.25 Tm
-[ (incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1804.8 Tm
+[ (labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip) ] TJ
 ET
 Q
 q
@@ -836,9 +756,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1820.05 Tm
-[ (ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1817.15 Tm
+[ (ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat) ] TJ
 ET
 Q
 q
@@ -846,9 +766,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 12 Tf
-1 0 0 -1 36 1833.85 Tm
-[ (voluptate velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 10.741 Tf
+1 0 0 -1 36 1829.5 Tm
+[ (nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 q
@@ -856,8 +776,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 20 Tf
-1 0 0 -1 36 1854.9 Tm
+/f0 17.902 Tf
+1 0 0 -1 36 1849.1 Tm
 [ (MixedSizes 20pt: Lorem ipsum dolor sit amet, consectetur) ] TJ
 ET
 Q
@@ -866,9 +786,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 20 Tf
-1 0 0 -1 36 1877.9 Tm
-[ (adipiscing elit. Sed do eiusmod tempor incididunt ut labore et) ] TJ
+/f0 17.902 Tf
+1 0 0 -1 36 1869.7 Tm
+[ (adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore) ] TJ
 ET
 Q
 q
@@ -876,9 +796,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 20 Tf
-1 0 0 -1 36 1900.9 Tm
-[ (dolore magna aliqua. Ut enim ad minim veniam, quis nostrud) ] TJ
+/f0 17.902 Tf
+1 0 0 -1 36 1890.3 Tm
+[ (magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation) ] TJ
 ET
 Q
 q
@@ -886,9 +806,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 20 Tf
-1 0 0 -1 36 1923.9 Tm
-[ (exercitation ullamco laboris nisi ut aliquip ex ea commodo) ] TJ
+/f0 17.902 Tf
+1 0 0 -1 36 1910.9 Tm
+[ (ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute) ] TJ
 ET
 Q
 q
@@ -896,9 +816,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 20 Tf
-1 0 0 -1 36 1946.9 Tm
-[ (consequat. Duis aute irure dolor in reprehenderit in voluptate) ] TJ
+/f0 17.902 Tf
+1 0 0 -1 36 1931.5 Tm
+[ (irure dolor in reprehenderit in voluptate velit esse cillum dolore eu) ] TJ
 ET
 Q
 q
@@ -906,9 +826,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 20 Tf
-1 0 0 -1 36 1969.9 Tm
-[ (velit esse cillum dolore eu fugiat nulla pariatur) 55.176 (.) ] TJ
+/f0 17.902 Tf
+1 0 0 -1 36 1952.1 Tm
+[ (fugiat nulla pariatur) 55.176 (.) ] TJ
 ET
 Q
 % page 2 media [0 0 612 2098.6]

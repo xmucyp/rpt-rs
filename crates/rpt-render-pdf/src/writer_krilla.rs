@@ -896,6 +896,31 @@ fn draw_text(surface: &mut Surface, fonts: &mut FontCache, t: &TextRun) {
         let (px, py) = (pt(t.bounds.left.0) as f32, pt(t.bounds.top.0) as f32);
         surface.push_transform(&Transform::from_rotate_at(-t.rotation, px, py));
     }
+    // A run wider than its box is cut at the box's edges, as Crystal clips a field that cannot grow:
+    // through the glyph, not before it, and only across. Vertically a line's glyphs may reach past
+    // its own box (Crystal's baseline sits below the drawn em's ascent), so the clip spans well
+    // beyond it. A run that fits pushes nothing, which keeps its output byte-identical.
+    let clipped = !rotated && text_w > pt(t.bounds.width.0) + 0.01;
+    if clipped {
+        let (left, width) = (pt(t.bounds.left.0) as f32, pt(t.bounds.width.0) as f32);
+        let (top, height) = (pt(t.bounds.top.0) as f32, pt(t.bounds.height.0) as f32);
+        let slack = height.max(size) * 2.0;
+        let mut pb = PathBuilder::new();
+        pb.move_to(left, top - slack);
+        pb.line_to(left + width, top - slack);
+        pb.line_to(left + width, top + height + slack);
+        pb.line_to(left, top + height + slack);
+        pb.close();
+        if let Some(path) = pb.finish() {
+            surface.push_clip_path(&path, &krilla::paint::FillRule::NonZero);
+        } else {
+            // An empty box: nothing of the run can show.
+            if rotated {
+                surface.pop();
+            }
+            return;
+        }
+    }
     // Justified: spread the box's slack across the inter-word gaps so both edges flush. The layout
     // marks a paragraph's last line `Left`, so only interior wrapped lines reach this.
     let extra =
@@ -911,6 +936,9 @@ fn draw_text(surface: &mut Surface, fonts: &mut FontCache, t: &TextRun) {
         spacing_pt as f32,
     );
     draw_text_decoration(surface, t, x, baseline_y, ascent_pt, size, text_w);
+    if clipped {
+        surface.pop();
+    }
     if rotated {
         surface.pop();
     }

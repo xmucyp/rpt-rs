@@ -16,7 +16,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 17.65 Tm
 [ (Black: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -36,7 +36,7 @@ q
 1 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 57.05 Tm
 [ (Red: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -56,7 +56,7 @@ q
 0 0.502 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 96.45 Tm
 [ (Green: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -76,7 +76,7 @@ q
 0 0 1 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 135.85 Tm
 [ (Blue: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -96,7 +96,7 @@ q
 0 1 1 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 175.25 Tm
 [ (Cyan: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -116,7 +116,7 @@ q
 1 0 1 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 214.65 Tm
 [ (Magenta: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -136,7 +136,7 @@ q
 0.502 0.502 0.502 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 254.05 Tm
 [ (Gray: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -156,7 +156,7 @@ q
 0.871 0.482 0.137 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 293.45 Tm
 [ (Custom1 #DE7B23: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -176,7 +176,7 @@ q
 0.416 0.051 0.678 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 351.05 Tm
 [ (Custom2 #6A0DAD: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -196,9 +196,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 408.65 Tm
-[ (AlignLeft: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789 ) 18.066 (The quick brown) ] TJ
+[ (AlignLeft: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789 ) 18.066 (The quick brown fox jumps) ] TJ
 ET
 Q
 q
@@ -206,9 +206,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 36 424.75 Tm
-[ (fox jumps over the lazy dog 0123456789) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 36 423.05 Tm
+[ (over the lazy dog 0123456789) ] TJ
 ET
 Q
 q
@@ -226,9 +226,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 53.875 466.25 Tm
-[ (AlignCenter: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789 ) 18.066 (The quick) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 51.4 466.25 Tm
+[ (AlignCenter: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789 ) 18.066 (The quick brown fox) ] TJ
 ET
 Q
 q
@@ -236,9 +236,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 158.925 482.35 Tm
-[ (brown fox jumps over the lazy dog 0123456789) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 203.25 480.65 Tm
+[ (jumps over the lazy dog 0123456789) ] TJ
 ET
 Q
 q
@@ -256,9 +256,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 39.05 523.85 Tm
-[ (AlignRight: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789 ) 18.066 (The quick brown) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 38.25 523.85 Tm
+[ (AlignRight: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789 ) 18.066 (The quick brown fox jumps) ] TJ
 ET
 Q
 q
@@ -266,9 +266,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 323.85 539.95 Tm
-[ (fox jumps over the lazy dog 0123456789) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 407.4 538.25 Tm
+[ (over the lazy dog 0123456789) ] TJ
 ET
 Q
 q
@@ -286,7 +286,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 581.45 Tm
 [ (AlignJustified:) ] TJ
 ET
@@ -296,8 +296,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 122.379 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 113.318 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -306,8 +306,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 128.469 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 118.403 581.45 Tm
 [ (The) ] TJ
 ET
 Q
@@ -316,8 +316,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 152.593 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 139.996 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -326,8 +326,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 158.682 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 145.082 581.45 Tm
 [ (quick) ] TJ
 ET
 Q
@@ -336,8 +336,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 191.365 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 174.336 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -346,8 +346,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 197.454 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 179.421 581.45 Tm
 [ (brown) ] TJ
 ET
 Q
@@ -356,8 +356,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 235.585 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 213.552 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -366,8 +366,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 241.675 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 218.637 581.45 Tm
 [ (fox) ] TJ
 ET
 Q
@@ -376,8 +376,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 260.351 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 235.354 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -386,8 +386,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 266.44 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 240.439 581.45 Tm
 [ (jumps) ] TJ
 ET
 Q
@@ -396,8 +396,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 303.785 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 273.866 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -406,8 +406,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 309.875 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 278.951 581.45 Tm
 [ (over) ] TJ
 ET
 Q
@@ -416,8 +416,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 337.109 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 303.329 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -426,8 +426,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 343.199 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 308.414 581.45 Tm
 [ (the) ] TJ
 ET
 Q
@@ -436,8 +436,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 362.661 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 325.835 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -446,8 +446,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 368.75 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 330.92 581.45 Tm
 [ (lazy) ] TJ
 ET
 Q
@@ -456,8 +456,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 393.647 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 353.205 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -466,8 +466,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 399.737 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 358.29 581.45 Tm
 [ (dog) ] TJ
 ET
 Q
@@ -476,8 +476,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 423.095 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 379.198 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -486,8 +486,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 429.185 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 384.283 581.45 Tm
 [ (0123456789) ] TJ
 ET
 Q
@@ -496,8 +496,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 507.046 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 453.977 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -506,8 +506,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 513.136 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 459.062 581.45 Tm
 [ (The) ] TJ
 ET
 Q
@@ -516,8 +516,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 537.26 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 480.655 581.45 Tm
 ( ) Tj
 ET
 Q
@@ -526,8 +526,8 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 543.349 581.45 Tm
+/f0 12.531 Tf
+1 0 0 -1 485.741 581.45 Tm
 [ (quick) ] TJ
 ET
 Q
@@ -536,9 +536,49 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 36 597.55 Tm
-[ (brown fox jumps over the lazy dog 0123456789) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 514.995 581.45 Tm
+( ) Tj
+ET
+Q
+q
+1 0 0 -1 36 1018 cm
+0 0 0 rg
+BT
+0 Tr
+/f0 12.531 Tf
+1 0 0 -1 520.08 581.45 Tm
+[ (brown) ] TJ
+ET
+Q
+q
+1 0 0 -1 36 1018 cm
+0 0 0 rg
+BT
+0 Tr
+/f0 12.531 Tf
+1 0 0 -1 554.211 581.45 Tm
+( ) Tj
+ET
+Q
+q
+1 0 0 -1 36 1018 cm
+0 0 0 rg
+BT
+0 Tr
+/f0 12.531 Tf
+1 0 0 -1 559.296 581.45 Tm
+[ (fox) ] TJ
+ET
+Q
+q
+1 0 0 -1 36 1018 cm
+0 0 0 rg
+BT
+0 Tr
+/f0 12.531 Tf
+1 0 0 -1 36 595.85 Tm
+[ (jumps over the lazy dog 0123456789) ] TJ
 ET
 Q
 q
@@ -556,7 +596,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 639.05 Tm
 [ (FillY) 91.797 (ellow: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -576,7 +616,7 @@ q
 1 1 1 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 678.45 Tm
 [ (FillNavy: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -596,29 +636,29 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 881.65 Tm
-[ (Rotate90: ) 18.066 (The quick) ] TJ
+[ (Rotate90: ) 18.066 (The quick brown) ] TJ
 ET
 Q
 q
-0 1 1 0 -780.9 96.9 cm
+0 1 1 0 -782.6 98.6 cm
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 52.1 881.65 Tm
-[ (brown fox jumps over the) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 50.4 881.65 Tm
+[ (fox jumps over the lazy dog) ] TJ
 ET
 Q
 q
-0 1 1 0 -764.8 80.8 cm
+0 1 1 0 -768.2 84.2 cm
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 68.2 881.65 Tm
-[ (lazy dog 0123456789) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 64.8 881.65 Tm
+[ (0123456789) ] TJ
 ET
 Q
 q
@@ -636,28 +676,28 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 186 717.85 Tm
-[ (Rotate270: ) 18.066 (The quick) ] TJ
+[ (Rotate270: ) 18.066 (The quick brown) ] TJ
 ET
 Q
 q
-0 -1 -1 0 911.1 482.7 cm
+0 -1 -1 0 912.8 484.4 cm
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 169.9 717.85 Tm
-[ (brown fox jumps over the) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 171.6 717.85 Tm
+[ (fox jumps over the lazy dog) ] TJ
 ET
 Q
 q
-0 -1 -1 0 895 466.6 cm
+0 -1 -1 0 898.4 470 cm
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
-1 0 0 -1 153.8 717.85 Tm
-[ (lazy dog 0123456789) ] TJ
+/f0 12.531 Tf
+1 0 0 -1 157.2 717.85 Tm
+[ (0123456789) ] TJ
 ET
 Q

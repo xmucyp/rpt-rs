@@ -66,7 +66,7 @@
       "text": "Arial: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Arial",
-        "size_pt": 14.0,
+        "size_pt": 12.5314,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -81,9 +81,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 7891,
+        "advance": 7063,
         "ascent": 253,
-        "line_height": 322
+        "line_height": 288
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -128,7 +128,7 @@
       "text": "Times New Roman: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Times New Roman",
-        "size_pt": 14.0,
+        "size_pt": 12.642,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -143,9 +143,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 8901,
+        "advance": 8038,
         "ascent": 249,
-        "line_height": 322
+        "line_height": 291
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -185,12 +185,12 @@
         "left": 720,
         "top": 2040,
         "width": 10800,
-        "height": 317
+        "height": 728
       },
-      "text": "Courier New: The quick brown fox jumps over the lazy dog",
+      "text": "Courier New: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Courier New",
-        "size_pt": 14.0,
+        "size_pt": 12.35864,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -205,46 +205,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 9409,
+        "advance": 9937,
         "ascent": 233,
-        "line_height": 317
-      },
-      "source": {
-        "section": "ReportHeaderSection1",
-        "object_name": "Txt3",
-        "kind": "Text",
-        "instance": 2
-      }
-    },
-    {
-      "op": "Text",
-      "bounds": {
-        "left": 720,
-        "top": 2357,
-        "width": 10800,
-        "height": 317
-      },
-      "text": "0123456789",
-      "font": {
-        "family": "Courier New",
-        "size_pt": 14.0,
-        "bold": false,
-        "italic": false,
-        "underline": false,
-        "strikethrough": false
-      },
-      "color": {
-        "a": 255,
-        "r": 0,
-        "g": 0,
-        "b": 0
-      },
-      "align": "Left",
-      "rotation": 0.0,
-      "metrics": {
-        "advance": 1680,
-        "ascent": 233,
-        "line_height": 317
+        "line_height": 280
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -289,7 +252,7 @@
       "text": "Verdana: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Verdana",
-        "size_pt": 14.0,
+        "size_pt": 11.51948,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -304,9 +267,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 8374,
+        "advance": 6890,
         "ascent": 253,
-        "line_height": 322
+        "line_height": 265
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -351,7 +314,7 @@
       "text": "Georgia: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Georgia",
-        "size_pt": 14.0,
+        "size_pt": 12.3214,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -366,9 +329,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 7631,
+        "advance": 6716,
         "ascent": 249,
-        "line_height": 322
+        "line_height": 283
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -413,7 +376,7 @@
       "text": "Tahoma: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Tahoma",
-        "size_pt": 14.0,
+        "size_pt": 11.598721,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -428,9 +391,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 8327,
+        "advance": 6898,
         "ascent": 253,
-        "line_height": 322
+        "line_height": 267
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -475,7 +438,7 @@
       "text": "Trebuchet MS: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Trebuchet MS",
-        "size_pt": 14.0,
+        "size_pt": 12.05722,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -490,9 +453,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 9079,
+        "advance": 7819,
         "ascent": 253,
-        "line_height": 322
+        "line_height": 277
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -537,7 +500,7 @@
       "text": "Comic Sans MS: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Comic Sans MS",
-        "size_pt": 14.0,
+        "size_pt": 10.04626,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -552,9 +515,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 9338,
+        "advance": 6701,
         "ascent": 253,
-        "line_height": 322
+        "line_height": 231
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -599,7 +562,7 @@
       "text": "Impact: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Impact",
-        "size_pt": 14.0,
+        "size_pt": 11.47804,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -614,9 +577,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 8171,
+        "advance": 6699,
         "ascent": 253,
-        "line_height": 322
+        "line_height": 264
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -661,7 +624,7 @@
       "text": "Consolas: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Consolas",
-        "size_pt": 14.0,
+        "size_pt": 12.5314,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -676,9 +639,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 10753,
+        "advance": 9625,
         "ascent": 233,
-        "line_height": 317
+        "line_height": 284
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -723,7 +686,7 @@
       "text": "Calibri: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Calibri",
-        "size_pt": 14.0,
+        "size_pt": 11.4688,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -738,9 +701,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 8124,
+        "advance": 6655,
         "ascent": 253,
-        "line_height": 322
+        "line_height": 264
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -785,7 +748,7 @@
       "text": "Cambria: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Cambria",
-        "size_pt": 14.0,
+        "size_pt": 11.94172,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -800,9 +763,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 7698,
+        "advance": 6566,
         "ascent": 249,
-        "line_height": 322
+        "line_height": 275
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -847,7 +810,7 @@
       "text": "Segoe UI: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Segoe UI",
-        "size_pt": 14.0,
+        "size_pt": 12.5314,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -862,9 +825,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 8498,
+        "advance": 7607,
         "ascent": 253,
-        "line_height": 322
+        "line_height": 288
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -904,12 +867,12 @@
         "left": 720,
         "top": 10708,
         "width": 10800,
-        "height": 317
+        "height": 728
       },
-      "text": "Lucida Console: The quick brown fox jumps over the lazy dog",
+      "text": "Lucida Console: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Lucida Console",
-        "size_pt": 14.0,
+        "size_pt": 12.5314,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -924,46 +887,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 9913,
+        "advance": 10528,
         "ascent": 233,
-        "line_height": 317
-      },
-      "source": {
-        "section": "ReportHeaderSection1",
-        "object_name": "Txt14",
-        "kind": "Text",
-        "instance": 13
-      }
-    },
-    {
-      "op": "Text",
-      "bounds": {
-        "left": 720,
-        "top": 11025,
-        "width": 10800,
-        "height": 317
-      },
-      "text": "0123456789",
-      "font": {
-        "family": "Lucida Console",
-        "size_pt": 14.0,
-        "bold": false,
-        "italic": false,
-        "underline": false,
-        "strikethrough": false
-      },
-      "color": {
-        "a": 255,
-        "r": 0,
-        "g": 0,
-        "b": 0
-      },
-      "align": "Left",
-      "rotation": 0.0,
-      "metrics": {
-        "advance": 1680,
-        "ascent": 233,
-        "line_height": 317
+        "line_height": 284
       },
       "source": {
         "section": "ReportHeaderSection1",
@@ -1008,7 +934,7 @@
       "text": "Wingdings: The quick brown fox jumps over the lazy dog 0123456789",
       "font": {
         "family": "Wingdings",
-        "size_pt": 14.0,
+        "size_pt": 12.5314,
         "bold": false,
         "italic": false,
         "underline": false,
@@ -1023,9 +949,9 @@
       "align": "Left",
       "rotation": 0.0,
       "metrics": {
-        "advance": 8638,
+        "advance": 7732,
         "ascent": 253,
-        "line_height": 322
+        "line_height": 288
       },
       "source": {
         "section": "ReportHeaderSection1",

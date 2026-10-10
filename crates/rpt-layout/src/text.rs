@@ -33,6 +33,15 @@ pub(crate) fn spaced_width_twips(
 /// Wrapping falls back to the trait's greedy, space-based default: the adjusted width has to drive
 /// the break, and a real stack's script-aware `wrap` measures its own way. Spacing is a Latin
 /// designer control, so this only matters for a spaced non-spaced-script run.
+/// Where Crystal puts a line's baseline below the top of its line: the face's ascent at the
+/// object's **stored** point size, although its glyphs are drawn at the smaller em that size
+/// implies as a GDI cell height ([`crate::font_of`]). So the ascent at the drawn em is divided by
+/// the family's cell-to-em ratio. For 10 pt Arial that is 9.05 pt where the drawn em's ascent is
+/// 8.10 pt: without it every line of report text sits about a point high.
+pub(crate) fn crystal_ascent_twips(layout: &dyn TextLayout, font: &FontSpec) -> f64 {
+    layout.ascent_twips(font) / f64::from(rpt_pages::gdi_cell_em_ratio(&font.family))
+}
+
 #[derive(Debug)]
 pub(crate) struct SpacedLayout<'a> {
     inner: &'a dyn TextLayout,

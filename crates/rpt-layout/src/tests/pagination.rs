@@ -1065,8 +1065,8 @@ fn section_box_underlays_and_grows_with_the_band() {
     );
 }
 
-/// A box whose stored end-section index names a later section spans down to that section's bottom,
-/// not only its own band.
+/// A box whose stored end-section index names a later section spans down to its stored bottom in
+/// that section, not only its own band.
 #[test]
 fn box_spans_to_end_section() {
     // Page header (300) then detail (500): a box in the page header (section 0) whose end-section
@@ -1082,6 +1082,7 @@ fn box_spans_to_end_section() {
     };
     let mut bs = rpt_model::BoxShape::default();
     bs.shape.end_section_index = 1; // the Details section
+    bs.shape.bottom = Twips(300); // its second corner, 300 twips into that section
     let border = Color {
         a: 255,
         r: 0x33,
@@ -1113,17 +1114,17 @@ fn box_spans_to_end_section() {
     );
     assert_eq!(
         frame.bounds.height,
-        Twips(800),
-        "box spans from its top to the detail section bottom (300 + 500)"
+        Twips(600),
+        "box spans from its top to its stored bottom inside the detail section (300 + 300)"
     );
 }
 
 /// A line whose stored end-section index names a later section extends its lower endpoint down to
-/// that section's bottom.
+/// its stored bottom inside that section.
 #[test]
 fn line_spans_to_end_section() {
-    // A vertical line in the page header (section 0) ending in the detail section (1) reaches
-    // y = 300 + 500 = 800.
+    // A vertical line in the page header (section 0) ending 450 twips into the detail section (1)
+    // reaches y = 300 + 450 = 750.
     let mut lineo = ReportObject::default();
     lineo.name = "Rule".into();
     lineo.bounds = Rect {
@@ -1134,6 +1135,7 @@ fn line_spans_to_end_section() {
     };
     let mut ls = LineShape::default();
     ls.shape.end_section_index = 1; // the Details section
+    ls.shape.bottom = Twips(450);
     ls.shape.line_thickness = Twips(10);
     lineo.kind = ReportObjectKind::Line(ls);
     lineo.border.left = LineStyle::SingleLine;
@@ -1159,7 +1161,7 @@ fn line_spans_to_end_section() {
         })
         .expect("the spanning line op");
     let bottom = line.from.y.0.max(line.to.y.0);
-    assert_eq!(bottom, 800, "the line reaches the detail section bottom");
+    assert_eq!(bottom, 750, "the line reaches its stored bottom in the detail section");
 }
 
 /// A `suppress-if-blank` detail section that resolves to no visible content is dropped and reserves

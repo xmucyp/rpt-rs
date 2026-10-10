@@ -434,8 +434,11 @@ fn vertical_alignment_offsets_text_block() {
             })
             .expect("the aligned text run")
     }
-    // The detail band starts below the 300-twip page header.
+    // The detail band starts below the 300-twip page header. A 10pt line is 10 × the Arial
+    // cell-to-em ratio × 20 × 1.2 = 215 twips (ApproxLayout), leaving 505 twips of slack.
     let base = 300;
+    let line = (10.0 * rpt_pages::gdi_cell_em_ratio("Arial") * 20.0 * 1.2).round() as i32;
+    let slack = 720 - line;
     assert_eq!(
         top_of(VerticalAlignment::Top),
         base,
@@ -443,18 +446,19 @@ fn vertical_alignment_offsets_text_block() {
     );
     assert_eq!(
         top_of(VerticalAlignment::VerticalCenter),
-        base + 240,
-        "centre offsets by half the 480-twip slack"
+        base + slack / 2,
+        "centre offsets by half the slack"
     );
     assert_eq!(
         top_of(VerticalAlignment::Bottom),
-        base + 480,
+        base + slack,
         "bottom offsets by the full slack"
     );
 }
 
 /// Each paragraph renders at its own font size — a 12pt paragraph followed by a 20pt one emits two
-/// runs at those sizes, and the larger paragraph advances the next line by its taller pitch.
+/// runs at those sizes, and the larger paragraph advances the next line by its taller pitch. The
+/// stored size is a GDI cell height, so each run's em is the size times Arial's cell-to-em ratio.
 #[test]
 fn per_paragraph_font_size_applies() {
     let single = rpt_model::LineSpacing::default();
@@ -462,13 +466,15 @@ fn per_paragraph_font_size_applies() {
         "Mixed",
         &[(single, 12.0, "first"), (single, 20.0, "second")],
     ));
+    let r = rpt_pages::gdi_cell_em_ratio("Arial");
     assert_eq!(runs.len(), 2);
-    assert_eq!(runs[0].font.size_pt, 12.0);
-    assert_eq!(runs[1].font.size_pt, 20.0);
-    // The 12pt line's pitch is 12 * 20 * 1.2 = 288 twips (ApproxLayout), so the 20pt line sits there.
-    assert_eq!(runs[1].bounds.top.0 - runs[0].bounds.top.0, 288);
-    // The 20pt run carries the taller line height (20 * 20 * 1.2 = 480).
-    assert_eq!(runs[1].metrics.unwrap().line_height.0, 480);
+    assert_eq!(runs[0].font.size_pt, 12.0 * r);
+    assert_eq!(runs[1].font.size_pt, 20.0 * r);
+    // The 12pt line's pitch is 12r * 20 * 1.2 twips (ApproxLayout), so the 20pt line sits there.
+    let pitch = |pt: f32| (pt * r * 20.0 * 1.2).round() as i32;
+    assert_eq!(runs[1].bounds.top.0 - runs[0].bounds.top.0, pitch(12.0));
+    // The 20pt run carries the taller line height.
+    assert_eq!(runs[1].metrics.unwrap().line_height.0, pitch(20.0));
 }
 
 /// Line spacing scales each line's pitch: double spacing doubles the line height and the gap to the
@@ -491,8 +497,9 @@ fn line_spacing_scales_line_pitch() {
     ));
     let sh = s[0].metrics.unwrap().line_height.0;
     let dh = d[0].metrics.unwrap().line_height.0;
-    assert_eq!(sh, 240); // 10pt * 20 * 1.2
-    assert_eq!(dh, 480); // doubled
+    // 10pt × Arial's cell-to-em ratio × 20 × 1.2
+    assert_eq!(sh, (10.0 * rpt_pages::gdi_cell_em_ratio("Arial") * 20.0 * 1.2).round() as i32);
+    assert_eq!(dh, 2 * sh); // doubled
     assert_eq!(d[1].bounds.top.0 - d[0].bounds.top.0, dh);
 
     let exact = LineSpacing {
@@ -659,9 +666,9 @@ fn a_backends_per_cluster_spacing_sums_to_the_measured_advance() {
         .iter()
         .map(|c| natural(c) + f64::from(SPACING))
         .sum();
-    assert_eq!(
-        (f64::from(advance) - per_glyph).round() as i32,
-        SPACING,
+    // Within a twip: the measured advance is whole twips and the glyph widths are not.
+    assert!(
+        ((f64::from(advance) - per_glyph).round() as i32 - SPACING).abs() <= 1,
         "the per-glyph rule must not reconcile — that is the bug this field prevents"
     );
 }

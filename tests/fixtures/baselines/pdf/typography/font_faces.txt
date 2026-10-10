@@ -18,7 +18,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 17.65 Tm
 [ (Arial: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -38,7 +38,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f1 14 Tf
+/f1 12.642 Tf
 1 0 0 -1 36 56.85 Tm
 [ (T) 35.156 (imes New Roman: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -58,19 +58,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f2 14 Tf
+/f2 12.359 Tf
 1 0 0 -1 36 113.65 Tm
-[ (Courier New: The quick brown fox jumps over the lazy dog) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 760.2 cm
-0 0 0 rg
-BT
-0 Tr
-/f2 14 Tf
-1 0 0 -1 36 129.5 Tm
-[ (0123456789) ] TJ
+[ (Courier New: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
 Q
 q
@@ -88,7 +78,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 11.519 Tf
 1 0 0 -1 36 154.05 Tm
 [ (V) 55.176 (erdana: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -108,7 +98,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f1 14 Tf
+/f1 12.321 Tf
 1 0 0 -1 36 193.25 Tm
 [ (Geor) 18.066 (gia: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -128,7 +118,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 11.599 Tf
 1 0 0 -1 36 232.85 Tm
 [ (T) 110.84 (ahoma: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -148,7 +138,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.057 Tf
 1 0 0 -1 36 272.25 Tm
 [ (T) 37.109 (rebuchet MS: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -168,7 +158,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 10.046 Tf
 1 0 0 -1 36 311.65 Tm
 [ (Comic Sans MS: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -188,7 +178,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 11.478 Tf
 1 0 0 -1 36 351.05 Tm
 [ (Impact: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -208,7 +198,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f2 14 Tf
+/f2 12.531 Tf
 1 0 0 -1 36 389.45 Tm
 [ (Consolas: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -228,7 +218,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 11.469 Tf
 1 0 0 -1 36 429.85 Tm
 [ (Calibri: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -248,7 +238,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f1 14 Tf
+/f1 11.942 Tf
 1 0 0 -1 36 469.05 Tm
 [ (Cambria: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -268,7 +258,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 508.65 Tm
 [ (Segoe UI: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
@@ -288,19 +278,9 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f2 14 Tf
+/f2 12.531 Tf
 1 0 0 -1 36 547.05 Tm
-[ (Lucida Console: The quick brown fox jumps over the lazy dog) ] TJ
-ET
-Q
-q
-1 0 0 -1 36 760.2 cm
-0 0 0 rg
-BT
-0 Tr
-/f2 14 Tf
-1 0 0 -1 36 562.9 Tm
-[ (0123456789) ] TJ
+[ (Lucida Console: The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET
 Q
 q
@@ -318,7 +298,7 @@ q
 0 0 0 rg
 BT
 0 Tr
-/f0 14 Tf
+/f0 12.531 Tf
 1 0 0 -1 36 587.45 Tm
 [ (Wingdings: ) 18.066 (The quick brown fox jumps over the lazy dog 0123456789) ] TJ
 ET

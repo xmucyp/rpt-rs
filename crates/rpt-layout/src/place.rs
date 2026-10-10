@@ -234,13 +234,27 @@ impl Formatter<'_> {
             | ReportObjectKind::FieldHeading(_) => self.emit_text_object(obj, plan, &at),
             ReportObjectKind::Box(b) => self.emit_box(obj, b, ctx, &at),
             ReportObjectKind::Line(l) => self.emit_line(obj, l, &at),
-            ReportObjectKind::Picture(p) => self.emit_picture(obj, p, &at),
-            ReportObjectKind::BlobField(bf) => self.emit_blob_field(obj, bf, ctx, &at),
+            // A picture, blob field, chart or subreport is framed like any other object: its own
+            // background behind it and its border on top (a chart in a light frame, say).
+            ReportObjectKind::Picture(p) => {
+                let rect = self.page_rect(&obj.bounds, origin_y);
+                self.push_object_fill(obj, rect, section_name, instance);
+                self.emit_picture(obj, p, &at);
+                self.push_border(obj, rect, section_name, instance);
+            }
+            ReportObjectKind::BlobField(bf) => {
+                let rect = self.page_rect(&obj.bounds, origin_y);
+                self.push_object_fill(obj, rect, section_name, instance);
+                self.emit_blob_field(obj, bf, ctx, &at);
+                self.push_border(obj, rect, section_name, instance);
+            }
             // Charts render as native draw-ops from the group summaries; cross-tabs
             // and unlinked subreports still fall back to a placeholder box carrying identity.
             ReportObjectKind::Chart(c) => {
                 let rect = self.page_rect(&obj.bounds, origin_y);
-                self.emit_chart(c, rect, section_name, obj)
+                self.push_object_fill(obj, rect, section_name, instance);
+                self.emit_chart(c, rect, section_name, obj);
+                self.push_border(obj, rect, section_name, instance);
             }
             ReportObjectKind::CrossTab(ct) => {
                 let rect = self.page_rect(&obj.bounds, origin_y);
@@ -401,7 +415,8 @@ impl Formatter<'_> {
     ) {
         let rect = self.page_rect(&obj.bounds, at.origin_y);
         // A box that names a later end section spans down to it: its height is the run from
-        // its top to that section's bottom (summed from the design section layout). Otherwise
+        // its top to its stored bottom inside that section (summed from the design section
+        // layout). Otherwise
         // it is an in-section box: a section-spanning background box (its design bottom reaches
         // most of the way down the section) grows with the band, so when can-grow content makes
         // the row taller the shading/frame tracks the actual rendered height instead of covering
@@ -412,6 +427,7 @@ impl Formatter<'_> {
                 at.section_name,
                 b.shape.end_section_index,
                 obj.bounds.top.0,
+                b.shape.bottom.0,
             )
         } else {
             extend_section_box(rect, &obj.bounds, at.band_height, at.section_design_height)
@@ -449,12 +465,13 @@ impl Formatter<'_> {
         // A horizontal line uses the box top; a vertical line its left. Use the object rect.
         let (mut from, mut to) = line_endpoints(rect);
         // A line that names a later end section spans down to it (a spanning line is vertical):
-        // extend its lower endpoint to that section's bottom in the design section layout.
+        // extend its lower endpoint to its stored bottom inside that section.
         if self.spans_sections(l.shape.end_section_index, at.section_name) {
             if let Some(h) = self.design_span_height(
                 at.section_name,
                 l.shape.end_section_index,
                 obj.bounds.top.0,
+                l.shape.bottom.0,
             ) {
                 let bottom = rect.top.0 + h;
                 if to.y.0 >= from.y.0 {
@@ -960,12 +977,13 @@ impl Formatter<'_> {
         // the two reports disagree about is dropped rather than guessed (see `SectionMap`).
         self.sections.borrow_mut().merge(&sub_doc.sections);
 
-        // Map the subreport's printable origin (its margins) to box-local `0,0`. Flow mode paginates
-        // only on the subreport's own forced `NewPage` breaks (the body is unbounded), so it yields
-        // one chunk per such break — the interior boundaries become forced parent page breaks. The
-        // non-flow path (fixed / multi-column bands) takes only the first page.
-        let mx = sub_report.print_options.margins.left.0;
-        let my = sub_report.print_options.margins.top.0;
+        // The subreport's page ops are already relative to its printable origin, which is the box's
+        // top-left: Crystal draws a subreport's content at the box plus each object's own offset and
+        // applies no margin of the subreport's (measured against Crystal's own render: its fields
+        // sit a quarter inch right of and below where subtracting the margins put them). Flow mode
+        // paginates only on the subreport's own forced `NewPage` breaks (the body is unbounded), so
+        // it yields one chunk per such break — the interior boundaries become forced parent page
+        // breaks. The non-flow path (fixed / multi-column bands) takes only the first page.
         if sub_doc.pages.is_empty() {
             return None;
         }
@@ -976,7 +994,7 @@ impl Formatter<'_> {
             .take(take)
             .enumerate()
             .map(|(pi, page)| {
-                let ops: Vec<DrawOp> = page.ops.iter().map(|op| op.translate(-mx, -my)).collect();
+                let ops: Vec<DrawOp> = page.ops.clone();
                 // Height = the deepest op bottom below the box top; a chunk shorter than the box keeps
                 // the box height so the band never shrinks.
                 let height = ops
@@ -1213,17 +1231,42 @@ impl Formatter<'_> {
             return;
         }
         let color = b.border_color.unwrap_or(DEFAULT_BORDER);
-        self.push_op(DrawOp::Rect(RectOp {
-            bounds: rect,
-            fill: None,
-            stroke: Some(hairline_stroke(color)),
-            corner_radius: Twips(0),
-            source: Some(
-                ObjectRef::new(section_name, ObjectKind::Box)
-                    .named(&obj.name)
-                    .with_instance(instance),
-            ),
-        }));
+        let source = Some(
+            ObjectRef::new(section_name, ObjectKind::Box)
+                .named(&obj.name)
+                .with_instance(instance),
+        );
+        let drawn = |s: RptLineStyle| !matches!(s, RptLineStyle::NoLine);
+        if [b.top, b.bottom, b.left, b.right].into_iter().all(drawn) {
+            self.push_op(DrawOp::Rect(RectOp {
+                bounds: rect,
+                fill: None,
+                stroke: Some(hairline_stroke(color)),
+                corner_radius: Twips(0),
+                source,
+            }));
+            return;
+        }
+        // Only some sides are set (a title underlined with a bottom border, say): draw just those.
+        let (l, t) = (rect.left.0, rect.top.0);
+        let (r, btm) = (l + rect.width.0, t + rect.height.0);
+        let point = |x: i32, y: i32| rpt_pages::Point { x: Twips(x), y: Twips(y) };
+        let sides = [
+            (b.top, point(l, t), point(r, t)),
+            (b.bottom, point(l, btm), point(r, btm)),
+            (b.left, point(l, t), point(l, btm)),
+            (b.right, point(r, t), point(r, btm)),
+        ];
+        for (style, from, to) in sides {
+            if drawn(style) {
+                self.push_op(DrawOp::Line(LineOp {
+                    from,
+                    to,
+                    stroke: hairline_stroke(color),
+                    source: source.clone(),
+                }));
+            }
+        }
     }
 
     pub(crate) fn page_rect(&self, b: &Rect, origin_y: i32) -> Rect {
@@ -1258,30 +1301,33 @@ impl Formatter<'_> {
     }
 
     /// The height of a shape that spans from `start` section (its top `box_top` twips below the
-    /// section top) down to the bottom of the section at `end` (its stored end-section index).
-    /// `None` when the start section is not found, the end index is out of range, or the end lies
-    /// above the start. Growth of the intervening bands is not tracked (the span uses design
-    /// heights); the static layout is reproduced faithfully.
-    fn design_span_height(&self, start: &str, end: u16, box_top: i32) -> Option<i32> {
+    /// section top) down to its second corner in the section at `end` (its stored end-section
+    /// index), `end_bottom` twips below that section's top. Crystal ends a spanning box there, not
+    /// at the end section's foot: a report-header frame drawn down to just inside the next
+    /// section stops there. `None` when the start section is not found, the end index is out of
+    /// range, or the end lies above the start. Growth of the intervening bands is not tracked (the
+    /// span uses design heights); the static layout is reproduced faithfully.
+    fn design_span_height(&self, start: &str, end: u16, box_top: i32, end_bottom: i32) -> Option<i32> {
         let flat = self.flat_sections();
         let s = flat.iter().position(|(n, _)| *n == start)?;
         let e = usize::from(end);
         if e < s || e >= flat.len() {
             return None;
         }
-        // From the box top to the bottom of the start section, then every full section down to and
-        // including the end section.
+        // From the box top to the bottom of the start section, every full section in between, and
+        // the end section down to the shape's bottom (clamped to that section).
         let mut h = flat[s].1 - box_top;
-        for (_, height) in &flat[s + 1..=e] {
+        for (_, height) in &flat[s + 1..e] {
             h += *height;
         }
+        h += end_bottom.clamp(0, flat[e].1);
         Some(h.max(0))
     }
 
     /// Extend a spanning box's rect to reach its end section's bottom (design layout). The box never
     /// shrinks below its own decoded height; a span that cannot be resolved leaves the rect unchanged.
-    fn span_rect(&self, rect: Rect, start: &str, end: u16, box_top: i32) -> Rect {
-        match self.design_span_height(start, end, box_top) {
+    fn span_rect(&self, rect: Rect, start: &str, end: u16, box_top: i32, end_bottom: i32) -> Rect {
+        match self.design_span_height(start, end, box_top, end_bottom) {
             Some(h) if h > rect.height.0 => Rect {
                 height: Twips(h),
                 ..rect

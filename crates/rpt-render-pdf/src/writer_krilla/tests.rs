@@ -130,3 +130,55 @@ fn the_content_stream_carries_the_spacing_between_glyphs() {
         "no per-scalar TJ adjustment in:\n{listing}"
     );
 }
+
+/// A one-line page whose run measures `advance` twips in a 2000-twip box.
+fn page_with_run(advance: i32) -> Page {
+    let mut page = Page::new(
+        1,
+        PageSize {
+            width: Twips(12240),
+            height: Twips(15840),
+        },
+    );
+    page.push(DrawOp::Text(TextRun {
+        bounds: Rect {
+            left: Twips(720),
+            top: Twips(720),
+            width: Twips(2000),
+            height: Twips(240),
+        },
+        text: "Our Wheels Follow Us Everywhere".to_string(),
+        font: FontSpec {
+            family: "Liberation Sans".to_string(),
+            size_pt: SIZE,
+            ..FontSpec::default()
+        },
+        color: Color {
+            a: 255,
+            r: 0,
+            g: 0,
+            b: 0,
+        },
+        align: TextAlign::Left,
+        rotation: 0.0,
+        metrics: Some(TextMetrics {
+            advance: Twips(advance),
+            ascent: Twips(180),
+            line_height: Twips(240),
+        }),
+        character_spacing: Twips(0),
+        source: None,
+    }));
+    page
+}
+
+/// Crystal cuts a field's text at the field's edge, through the glyph. A run wider than its box is
+/// drawn under a clip; a run that fits pushes none, so its output is unchanged.
+#[test]
+fn a_run_wider_than_its_box_is_clipped_to_it() {
+    let clips = |listing: &str| listing.lines().filter(|l| l.split_whitespace().any(|op| op == "W")).count();
+    let wide = operator_listing(&crate::render_pages(&[page_with_run(3600)]));
+    assert_eq!(clips(&wide), 1, "one clip around the overflowing run in:\n{wide}");
+    let fits = operator_listing(&crate::render_pages(&[page_with_run(1800)]));
+    assert_eq!(clips(&fits), 0, "no clip for a run that fits in:\n{fits}");
+}

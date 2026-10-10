@@ -665,6 +665,7 @@ fn multi_para_object(name: &str, paras: &[(rpt_model::LineSpacing, f32, &str)]) 
 mod alignment;
 mod charts;
 mod crosstab;
+mod crystal_fidelity;
 mod currency;
 mod hierarchical;
 mod objects;

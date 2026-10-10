@@ -267,7 +267,7 @@ impl<'a> Formatter<'a> {
                 &para_font,
                 self.text_layout,
             ));
-            let ascent = Twips(self.text_layout.ascent_twips(&para_font) as i32);
+            let ascent = Twips(crate::text::crystal_ascent_twips(self.text_layout, &para_font) as i32);
             let avail = (body_w - left - right).max(1);
             // A spaced paragraph must break at the width it is drawn at, so the wrap measures through
             // the same adjusted advance the emitted run reports. Unspaced text (the default) uses the
@@ -318,7 +318,7 @@ impl<'a> Formatter<'a> {
                 width: obj.bounds.width,
                 font: font.clone(),
                 line_height: Twips(self.text_layout.line_height_twips(&font) as i32),
-                ascent: Twips(self.text_layout.ascent_twips(&font) as i32),
+                ascent: Twips(crate::text::crystal_ascent_twips(self.text_layout, &font) as i32),
                 align,
                 character_spacing: Twips(0),
             });
@@ -347,28 +347,12 @@ impl<'a> Formatter<'a> {
         state: &ResolveState,
         underlay_end: Option<UnderlayEnd>,
     ) -> bool {
-        if section.format.base.suppress {
+        if self.bands.suppressed(section) || self.conditionally_suppressed(section, row, state) {
             return false;
-        }
-        // A Section_Visibility condition suppresses the whole band per record, like the static flag.
-        // Evaluated on a probe context (the incoming record) so a suppressed band forces no page
-        // break and fires no side effects, matching the static path above.
-        if !section.condition_formulas.is_empty() {
-            let empty = Row::default();
-            let probe = self.context(row.unwrap_or(&empty), state);
-            if crate::resolve::cond_bool(
-                &section.condition_formulas,
-                crate::resolve::cond::SECTION_VISIBILITY,
-                Some(&probe),
-            )
-            .unwrap_or(false)
-            {
-                return false;
-            }
         }
         // NewPageBefore on this band, or a deferred NewPageAfter from the previous band, starts a
         // fresh page — but not when we are already at the top of one (that would leave a blank page).
-        if (self.pending_page_break || section.format.base.new_page_before) && self.cursor_y > 0 {
+        if (self.pending_page_break || self.bands.new_page_before(section)) && self.cursor_y > 0 {
             self.finish_page();
             self.begin_page();
         }
@@ -434,7 +418,7 @@ impl<'a> Formatter<'a> {
         }
 
         // NewPageAfter: defer the break to the next flow band so a trailing one adds no blank page.
-        if section.format.base.new_page_after {
+        if self.bands.new_page_after(section) {
             self.pending_page_break = true;
         }
         // ResetPageNumberAfter: restart the page-number counter at the next page top.
@@ -614,13 +598,13 @@ impl<'a> Formatter<'a> {
     /// [`Self::keep_group_together`]. Sums section design heights (no can-grow growth); a nested
     /// keep-together subgroup contributes its own subtree height.
     fn measure_group_height(&self, g: &GroupInstance) -> i32 {
-        fn band_height(sections: &[&Section]) -> i32 {
+        let band_height = |sections: &[&Section]| -> i32 {
             sections
                 .iter()
-                .filter(|s| !s.format.base.suppress)
+                .filter(|s| !self.bands.suppressed(s))
                 .map(|s| s.height.0)
                 .sum()
-        }
+        };
         let mut height = 0;
         if let Some(hdr) = self.bands.group_headers.get(g.level) {
             height += band_height(hdr);
@@ -845,7 +829,7 @@ impl<'a> Formatter<'a> {
             // Resolve every detail band's plans + height once (reused for pagination and emit).
             let banded: Vec<(&Section, Vec<Option<TextPlan>>, i32)> = bands
                 .iter()
-                .filter(|s| !s.format.base.suppress)
+                .filter(|s| !self.bands.suppressed(s))
                 .map(|s| {
                     let (plans, h) = self.band_plans_and_height(s, Some(&ctx), &state, true);
                     (*s, plans, h)
@@ -855,7 +839,7 @@ impl<'a> Formatter<'a> {
 
             // NewPageBefore on the detail section, or a break deferred from a prior band, starts a
             // fresh page before this record and resets the column cursor (mirrors `emit_band`).
-            let new_page_before = banded.iter().any(|(s, _, _)| s.format.base.new_page_before);
+            let new_page_before = banded.iter().any(|(s, _, _)| self.bands.new_page_before(s));
             // A "Records per page" cap breaks before the record it has no room for, exactly as in the
             // single-column path.
             if (self.pending_page_break || new_page_before || self.record_limit_reached())
@@ -904,7 +888,7 @@ impl<'a> Formatter<'a> {
             cur.dirty = true;
             // NewPageAfter / ResetPageNumberAfter defer to the next flow band, exactly as `emit_band`
             // does (the break-before check above consumes the deferred page break).
-            if banded.iter().any(|(s, _, _)| s.format.base.new_page_after) {
+            if banded.iter().any(|(s, _, _)| self.bands.new_page_after(s)) {
                 self.pending_page_break = true;
             }
             if banded
@@ -1028,7 +1012,7 @@ impl<'a> Formatter<'a> {
         self.in_report_header = true;
         for s in rh {
             let state = self.state(None);
-            if s.format.base.suppress {
+            if self.bands.suppressed(s) {
                 continue;
             }
             let empty = Row::default();
@@ -1076,6 +1060,23 @@ impl<'a> Formatter<'a> {
     /// cursor by the grown height; a Page Header / Page Footer is a fixed repeating band where
     /// can-grow is inert, so it stays at its designed height (native behavior — see the SDK note in
     /// [`Formatter::text_plan`]).
+    /// Whether a `Section_Visibility` condition suppresses `section` for `row`. Evaluated on a probe
+    /// context, so a suppressed band forces no page break and fires no side effects, exactly like
+    /// the static suppress flag.
+    fn conditionally_suppressed(&self, section: &Section, row: Option<&Row>, state: &ResolveState) -> bool {
+        if section.condition_formulas.is_empty() {
+            return false;
+        }
+        let empty = Row::default();
+        let probe = self.context(row.unwrap_or(&empty), state);
+        crate::resolve::cond_bool(
+            &section.condition_formulas,
+            crate::resolve::cond::SECTION_VISIBILITY,
+            Some(&probe),
+        )
+        .unwrap_or(false)
+    }
+
     fn emit_band_no_paginate(
         &mut self,
         section: &Section,
@@ -1083,7 +1084,9 @@ impl<'a> Formatter<'a> {
         state: &ResolveState,
         allow_grow: bool,
     ) {
-        if section.format.base.suppress {
+        // A page header or footer is suppressed per page the same way, typically `PageNumber = 1`
+        // to keep a running header off the first page.
+        if self.bands.suppressed(section) || self.conditionally_suppressed(section, row, state) {
             return;
         }
         let empty = Row::default();

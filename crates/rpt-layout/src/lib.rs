@@ -265,6 +265,42 @@ struct Bands<'a> {
     group_formats: Vec<GroupAreaFormat>,
     /// The Detail area's "Records per page" cap (`visible_records_per_page`); `0` = no limit.
     records_per_page: i32,
+    /// What each section inherits from its area's own format: an area suppressed as a whole
+    /// suppresses every section in it, and an area's New Page Before / After break before its
+    /// first section and after its last. Keyed by the section's address (the bands borrow the
+    /// report, so it is stable for the whole layout). Sections that inherit nothing are absent.
+    area_flags: std::collections::HashMap<*const Section, AreaFlags>,
+}
+
+/// The flags a section inherits from its area's format (see [`Bands::area_flags`]).
+#[derive(Debug, Clone, Copy, Default)]
+struct AreaFlags {
+    suppress: bool,
+    new_page_before: bool,
+    new_page_after: bool,
+}
+
+impl Bands<'_> {
+    fn area_flags(&self, s: &Section) -> AreaFlags {
+        self.area_flags.get(&std::ptr::from_ref(s)).copied().unwrap_or_default()
+    }
+
+    /// Whether `s` is suppressed outright: by its own flag or by its area's.
+    fn suppressed(&self, s: &Section) -> bool {
+        s.format.base.suppress || self.area_flags(s).suppress
+    }
+
+    /// Whether a new page starts before `s`: its own New Page Before, or its area's on its first
+    /// section.
+    fn new_page_before(&self, s: &Section) -> bool {
+        s.format.base.new_page_before || self.area_flags(s).new_page_before
+    }
+
+    /// Whether a new page starts after `s`: its own New Page After, or its area's on its last
+    /// section.
+    fn new_page_after(&self, s: &Section) -> bool {
+        s.format.base.new_page_after || self.area_flags(s).new_page_after
+    }
 }
 
 /// The level-matching key a group header and its footer share: the area name with its band token
@@ -313,6 +349,7 @@ impl<'a> Bands<'a> {
             page_footer: Vec::new(),
             group_formats: Vec::new(),
             records_per_page: 0,
+            area_flags: std::collections::HashMap::new(),
         };
         // Group headers appear in group-level order (outermost first); record each level's matching
         // key so its footer can be paired back to it by name, not by position.
@@ -327,6 +364,18 @@ impl<'a> Bands<'a> {
             } else {
                 area.sections.iter().collect()
             };
+            let base = &area.format.base;
+            let last = sections.len().saturating_sub(1);
+            for (i, s) in sections.iter().enumerate() {
+                let flags = AreaFlags {
+                    suppress: base.suppress,
+                    new_page_before: base.new_page_before && i == 0,
+                    new_page_after: base.new_page_after && i == last,
+                };
+                if flags.suppress || flags.new_page_before || flags.new_page_after {
+                    b.area_flags.insert(std::ptr::from_ref(*s), flags);
+                }
+            }
             match area.kind {
                 AreaSectionKind::ReportHeader => b.report_header.extend(sections),
                 AreaSectionKind::PageHeader => b.page_header.extend(sections),
@@ -920,14 +969,18 @@ pub(crate) fn translate_op(op: &DrawOp, dx: i32, dy: i32, id_offset: u32) -> Dra
     moved
 }
 
+/// The font a report object is drawn in. The stored size is a GDI cell height, so the em drawn is
+/// that times the family's cell-to-em ratio ([`rpt_pages::gdi_cell_em_ratio`]).
 pub(crate) fn font_of(f: &Font) -> FontSpec {
+    let family = if f.name.is_empty() {
+        "Arial".to_string()
+    } else {
+        f.name.clone()
+    };
+    let size = if f.size_pt > 0.0 { f.size_pt } else { 10.0 };
     FontSpec {
-        family: if f.name.is_empty() {
-            "Arial".to_string()
-        } else {
-            f.name.clone()
-        },
-        size_pt: if f.size_pt > 0.0 { f.size_pt } else { 10.0 },
+        size_pt: size * rpt_pages::gdi_cell_em_ratio(&family),
+        family,
         bold: f.bold,
         italic: f.italic,
         underline: f.underline,
