@@ -1479,4 +1479,10 @@ mod tests {
         let spec = field_format_spec(Some(&fmt), FieldValueType::Boolean, &loc);
         assert_eq!(render_value(&Value::Bool(true), &spec, &loc), "Yes");
     }
+
+    #[test]
+    fn en_ca_short_date_is_iso() {
+        let loc = Locale::from_tag("en-CA");
+        assert_eq!(default_date_pattern(&loc, false), "yyyy-MM-dd");
+    }
 }

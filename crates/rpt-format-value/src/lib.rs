@@ -319,6 +319,28 @@ pub const EN_US: Locale = Locale {
     default_decimals: 2,
 };
 
+/// en-CA as Windows formats it: an ISO short date (`yyyy-MM-dd`), dollars, and a negative amount
+/// led by a minus (`-$53.90`) rather than bracketed as in en-US.
+const EN_CA: Locale = Locale {
+    tag: "en-CA",
+    decimal_sep: '.',
+    thousands_sep: ',',
+    date_sep: '-',
+    date_order: DateOrder::YearMonthDay,
+    short_date_leading_zero: true,
+    months: &EN_MONTHS,
+    months_abbrev: &EN_MONTHS_ABBR,
+    days: &EN_DAYS,
+    days_abbrev: &EN_DAYS_ABBR,
+    twelve_hour: true,
+    am: "AM",
+    pm: "PM",
+    currency_symbol: "$",
+    currency_position: CurrencyPosition::LeadingNoSpace,
+    currency_negative: NegativeStyle::LeadingMinus,
+    default_decimals: 2,
+};
+
 const EN_GB: Locale = Locale {
     tag: "en-GB",
     decimal_sep: '.',
@@ -420,7 +442,7 @@ const IT_IT: Locale = Locale {
 };
 
 /// The built-in locale table, with a documented en-US fallback.
-pub const BUILTIN: &[Locale] = &[EN_US, EN_GB, DE_DE, FR_FR, ES_ES, IT_IT];
+pub const BUILTIN: &[Locale] = &[EN_US, EN_GB, EN_CA, DE_DE, FR_FR, ES_ES, IT_IT];
 
 /// Number formatting spec (SDK `INumericFieldFormat`).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1164,6 +1186,8 @@ mod tests {
         assert_eq!(Locale::lookup("de_DE.UTF-8").unwrap().tag, "de-DE"); // underscore + charset
         assert_eq!(Locale::lookup("de").unwrap().tag, "de-DE"); // language subtag only
         assert_eq!(Locale::lookup("EN-us").unwrap().tag, "en-US"); // case-insensitive
+        assert_eq!(Locale::lookup("en-CA").unwrap().tag, "en-CA");
+        assert_eq!(Locale::lookup("en").unwrap().tag, "en-US"); // a bare language keeps its first
         assert!(Locale::lookup("zz-ZZ").is_none()); // unsupported
         assert_eq!(Locale::from_tag("zz-ZZ").tag, "en-US"); // documented fallback
     }
