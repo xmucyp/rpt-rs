@@ -1254,6 +1254,76 @@ fn suppress_if_blank_section_reserves_no_space_when_empty() {
     assert_eq!(notes_shown, 4, "every non-blank note renders");
 }
 
+/// Blank text does not make a highlighted field blank: the fill still prints and consumes band
+/// height. White/transparent highlights replace a static fill, so check precedence as well.
+#[test]
+fn suppress_if_blank_uses_the_effective_highlight_background() {
+    use rpt_model::{FieldFormat, HighlightOperator, HighlightRule};
+    let grey = Color {
+        a: 255,
+        r: 192,
+        g: 192,
+        b: 192,
+    };
+    let white = Color {
+        a: 255,
+        r: 255,
+        g: 255,
+        b: 255,
+    };
+    let transparent = Color { a: 0, ..grey };
+    for (static_fill, highlight_fill, threshold, expected_pages, expected_fills) in [
+        (None, Some(grey), "1", 2, 4),
+        (None, Some(grey), "-1", 1, 0), // rule does not match zero
+        (Some(grey), Some(white), "1", 1, 0),
+        (Some(grey), Some(transparent), "1", 1, 0),
+        (Some(grey), None, "1", 2, 4), // no override: retain the static fill
+    ] {
+        let mut report = tiny_report(1500);
+        let mut obj = db_field_object("Highlight", "t.x", 0);
+        obj.border.background_color = static_fill;
+        if let ReportObjectKind::Field(field) = &mut obj.kind {
+            field.value_type = FieldValueType::Number;
+            let mut format = FieldFormat::default();
+            format.common.use_system_defaults = false;
+            format.numeric.suppress_if_zero = true;
+            field.format = Some(format);
+            field.highlights = vec![HighlightRule {
+                operator: HighlightOperator::LessThan,
+                threshold: threshold.into(),
+                font_color: None,
+                background_color: highlight_fill,
+            }];
+        }
+        let mut notes = section(AreaSectionKind::Detail, "Notes", 300, vec![obj]);
+        notes.format.suppress_if_blank = true;
+        report.report_definition.areas[1].sections.push(notes);
+        let saved = saved_data(
+            &[("t.x", FieldValueType::Number)],
+            &[&["0"], &["0"], &["0"], &["0"]],
+        );
+        let doc = rendered(&report, &saved);
+        assert_eq!(
+            doc.pages.len(),
+            expected_pages,
+            "static {static_fill:?}, highlight {highlight_fill:?}, threshold {threshold}"
+        );
+        let fills = doc
+            .pages
+            .iter()
+            .flat_map(|p| &p.ops)
+            .filter(|op| {
+                matches!(op, DrawOp::Rect(r) if r.fill.is_some()
+                && r.source.as_ref().is_some_and(|s| s.object_name.as_deref() == Some("Highlight")))
+            })
+            .count();
+        assert_eq!(fills, expected_fills);
+        assert!(!doc.pages.iter().flat_map(|p| &p.ops).any(|op|
+            matches!(op, DrawOp::Text(t) if t.source.as_ref().is_some_and(|s| s.object_name.as_deref() == Some("Highlight")) && !t.text.is_empty())),
+            "zero-suppressed field must have no visible text");
+    }
+}
+
 // --- Per-section paging limits ("Records per page" / "Groups per page"). ---
 
 /// `groups` region groups of `rows_per_group` rows each, grouped by `t.region`, with a 300-twip

@@ -571,9 +571,15 @@ impl<'a> Formatter<'a> {
                         .any(|s| !matches!(s, rpt_model::LineStyle::NoLine));
                     // A transparent or plain-white fill is default decoration, not content — only a
                     // visible (opaque, non-white) fill keeps the box.
-                    let visible_fill = border
-                        .background_color
-                        .is_some_and(|c| c.a > 0 && (c.r, c.g, c.b) != (255, 255, 255));
+                    // Match push_fill's precedence: a highlight replaces the static background.
+                    // Even a zero-suppressed field with no text can still draw a highlight fill.
+                    let background = plans
+                        .get(i)
+                        .and_then(Option::as_ref)
+                        .and_then(|p| p.background)
+                        .or(border.background_color);
+                    let visible_fill =
+                        background.is_some_and(|c| c.a > 0 && (c.r, c.g, c.b) != (255, 255, 255));
                     if has_edge || visible_fill || !border.condition_formulas.is_empty() {
                         return false;
                     }

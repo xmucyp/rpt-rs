@@ -6,12 +6,25 @@ use rpt_reader::model::{Color, HighlightOperator, ReportObjectKind};
 
 fn highlights(name: &str, object: &str) -> Option<Vec<rpt_reader::model::HighlightRule>> {
     let path = rpt_test_support::fixture(format!("tests/fixtures/reports/benbrahim777/{name}.rpt"));
-    let rpt = rpt_reader::Rpt::open(&path).ok()?;
+    if !path
+        .try_exists()
+        .expect("check highlighting fixture existence")
+    {
+        return None;
+    }
+    let rpt = rpt_reader::Rpt::open(&path)
+        .unwrap_or_else(|error| panic!("failed to parse {}: {error}", path.display()));
     let report = rpt.report();
-    let obj = report.objects().find(|o| o.name == object)?;
+    let obj = report
+        .objects()
+        .find(|o| o.name == object)
+        .unwrap_or_else(|| panic!("expected object {object:?} in {}", path.display()));
     match &obj.kind {
         ReportObjectKind::Field(f) => Some(f.highlights.clone()),
-        _ => None,
+        _ => panic!(
+            "expected object {object:?} to be a field in {}",
+            path.display()
+        ),
     }
 }
 
@@ -44,10 +57,15 @@ fn a_fields_rules_decode_in_the_order_they_are_tested() {
 #[test]
 fn objects_without_rules_carry_none() {
     let path = rpt_test_support::fixture("tests/fixtures/reports/benbrahim777/Orders5-150.rpt");
-    let Ok(rpt) = rpt_reader::Rpt::open(&path) else {
+    if !path
+        .try_exists()
+        .expect("check highlighting fixture existence")
+    {
         eprintln!("[skip] Orders5-150.rpt absent");
         return;
-    };
+    }
+    let rpt = rpt_reader::Rpt::open(&path)
+        .unwrap_or_else(|error| panic!("failed to parse {}: {error}", path.display()));
     let report = rpt.report();
     assert!(report.objects().all(|o| match &o.kind {
         ReportObjectKind::Field(f) => f.highlights.is_empty(),
