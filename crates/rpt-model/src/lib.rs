@@ -41,9 +41,9 @@ pub use data_def::{
 };
 pub use database::{CommandParameter, ConnectionInfo, Database, DbFieldDef, Table, TableLink};
 pub use document::{
-    AuthoringVersion, DesignerState, Guideline, MarginSides, MultiColumn, ObjectConnection, PageMargins,
-    PrintOptions, ReimportTimestamp, ReportOptions, SaveMetadataEntry, Subreport, SubreportLink,
-    SubreportReimportInfo, SummaryInfo,
+    AuthoringVersion, DesignerState, Guideline, MarginSides, MultiColumn, ObjectConnection,
+    PageMargins, PrintOptions, ReimportTimestamp, ReportOptions, SaveMetadataEntry, Subreport,
+    SubreportLink, SubreportReimportInfo, SummaryInfo,
 };
 pub use enums::*;
 pub use format::{

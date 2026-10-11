@@ -267,7 +267,8 @@ impl<'a> Formatter<'a> {
                 &para_font,
                 self.text_layout,
             ));
-            let ascent = Twips(crate::text::crystal_ascent_twips(self.text_layout, &para_font) as i32);
+            let ascent =
+                Twips(crate::text::crystal_ascent_twips(self.text_layout, &para_font) as i32);
             let avail = (body_w - left - right).max(1);
             // A spaced paragraph must break at the width it is drawn at, so the wrap measures through
             // the same adjusted advance the emitted run reports. Unspaced text (the default) uses the
@@ -1068,7 +1069,12 @@ impl<'a> Formatter<'a> {
     /// Whether a `Section_Visibility` condition suppresses `section` for `row`. Evaluated on a probe
     /// context, so a suppressed band forces no page break and fires no side effects, exactly like
     /// the static suppress flag.
-    fn conditionally_suppressed(&self, section: &Section, row: Option<&Row>, state: &ResolveState) -> bool {
+    fn conditionally_suppressed(
+        &self,
+        section: &Section,
+        row: Option<&Row>,
+        state: &ResolveState,
+    ) -> bool {
         if section.condition_formulas.is_empty() {
             return false;
         }

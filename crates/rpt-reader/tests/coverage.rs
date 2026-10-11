@@ -106,7 +106,9 @@ fn a_packed_report_with_a_memo_column_decodes_every_row() {
     assert_eq!(row[6], None, "the seed's description is NULL");
     assert_eq!(row[7].as_deref(), Some("24.34"));
     assert_eq!(row[8].as_deref(), Some("JPY"));
-    assert!(row[11].as_deref().is_some_and(|s| s.starts_with('\u{5089}')));
+    assert!(row[11]
+        .as_deref()
+        .is_some_and(|s| s.starts_with('\u{5089}')));
     assert_eq!(row[12].as_deref(), Some("Emerald Systems"));
     assert!(rpt.decode_coverage().is_complete());
 }

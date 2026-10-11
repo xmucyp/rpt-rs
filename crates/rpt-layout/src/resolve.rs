@@ -406,8 +406,15 @@ fn resolve_run(
 
 /// Whether a special field's value is a count, printed without decimals.
 fn is_count_special(name: &str) -> bool {
-    let key: String = name.chars().filter(|c| !c.is_whitespace()).collect::<String>().to_lowercase();
-    matches!(key.as_str(), "pagenumber" | "totalpagecount" | "recordnumber" | "groupnumber")
+    let key: String = name
+        .chars()
+        .filter(|c| !c.is_whitespace())
+        .collect::<String>()
+        .to_lowercase();
+    matches!(
+        key.as_str(),
+        "pagenumber" | "totalpagecount" | "recordnumber" | "groupnumber"
+    )
 }
 
 /// Stored conditional-format formula names, keyed exactly as `rpt-reader` decodes them from the record

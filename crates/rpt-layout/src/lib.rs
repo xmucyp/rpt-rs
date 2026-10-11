@@ -283,7 +283,10 @@ struct AreaFlags {
 
 impl Bands<'_> {
     fn area_flags(&self, s: &Section) -> AreaFlags {
-        self.area_flags.get(&std::ptr::from_ref(s)).copied().unwrap_or_default()
+        self.area_flags
+            .get(&std::ptr::from_ref(s))
+            .copied()
+            .unwrap_or_default()
     }
 
     /// Whether `s` is suppressed outright: by its own flag or by its area's.

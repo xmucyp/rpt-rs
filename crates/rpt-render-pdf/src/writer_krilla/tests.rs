@@ -176,9 +176,18 @@ fn page_with_run(advance: i32) -> Page {
 /// drawn under a clip; a run that fits pushes none, so its output is unchanged.
 #[test]
 fn a_run_wider_than_its_box_is_clipped_to_it() {
-    let clips = |listing: &str| listing.lines().filter(|l| l.split_whitespace().any(|op| op == "W")).count();
+    let clips = |listing: &str| {
+        listing
+            .lines()
+            .filter(|l| l.split_whitespace().any(|op| op == "W"))
+            .count()
+    };
     let wide = operator_listing(&crate::render_pages(&[page_with_run(3600)]));
-    assert_eq!(clips(&wide), 1, "one clip around the overflowing run in:\n{wide}");
+    assert_eq!(
+        clips(&wide),
+        1,
+        "one clip around the overflowing run in:\n{wide}"
+    );
     let fits = operator_listing(&crate::render_pages(&[page_with_run(1800)]));
     assert_eq!(clips(&fits), 0, "no clip for a run that fits in:\n{fits}");
 }

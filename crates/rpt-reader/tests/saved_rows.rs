@@ -129,7 +129,8 @@ fn a_multi_batch_report_decodes_every_batch() {
 /// these 127 rows.
 #[test]
 fn a_subreport_decodes_its_own_saved_rows() {
-    let path = rpt_test_support::fixture("tests/fixtures/reports/benbrahim777/Top5USAsubCanada.rpt");
+    let path =
+        rpt_test_support::fixture("tests/fixtures/reports/benbrahim777/Top5USAsubCanada.rpt");
     let rpt = Rpt::open(&path).expect("open");
     let sub = rpt
         .report()
@@ -142,7 +143,14 @@ fn a_subreport_decodes_its_own_saved_rows() {
     assert_eq!(saved.record_count, 127);
     assert_eq!(saved.rows.len(), 127);
     let names: Vec<&str> = saved.columns.iter().map(|c| c.name.as_str()).collect();
-    assert_eq!(names, ["Customer.Customer Name", "Customer.Country", "Orders.Order Amount"]);
+    assert_eq!(
+        names,
+        [
+            "Customer.Customer Name",
+            "Customer.Country",
+            "Orders.Order Amount"
+        ]
+    );
     assert!(saved.rows.iter().all(|r| r[1].as_deref() == Some("Canada")));
 }
 
@@ -155,13 +163,30 @@ fn margins_left_to_the_printer_can_be_reformatted_for_another_printer() {
     let rpt = Rpt::open(&path).expect("open");
     let po = &rpt.report().print_options;
     let quarter = Twips(360);
-    assert_eq!(po.margins, PageMargins { left: quarter, right: quarter, top: quarter, bottom: quarter });
+    assert_eq!(
+        po.margins,
+        PageMargins {
+            left: quarter,
+            right: quarter,
+            top: quarter,
+            bottom: quarter
+        }
+    );
     let sides = po.printer_default_margins;
     assert!(sides.left && sides.right && sides.top && sides.bottom);
 
     let sixth = Twips(240);
-    let laser = po.with_printer_margins(PageMargins { left: sixth, right: sixth, top: sixth, bottom: sixth });
+    let laser = po.with_printer_margins(PageMargins {
+        left: sixth,
+        right: sixth,
+        top: sixth,
+        bottom: sixth,
+    });
     assert_eq!(laser.margins.left, sixth);
-    assert_eq!(laser.content_width.0, po.content_width.0 + 240, "120 twips more on each side");
+    assert_eq!(
+        laser.content_width.0,
+        po.content_width.0 + 240,
+        "120 twips more on each side"
+    );
     assert_eq!(laser.content_height.0, po.content_height.0 + 240);
 }

@@ -6,9 +6,9 @@
 use crate::coverage::{BatchProblem, SavedDataStatus};
 use crate::model::{FieldValueType, SavedBatchKind};
 
+use super::batch_failed;
 use super::decrypt::decode_batch_at;
 use super::schema::{BatchShape, SavedCatalog, SavedFieldDesc, INDEX_BATCH_SIZE, MAX_ITEM_SIZE};
-use super::batch_failed;
 
 /// The widest inline buffer read as a scalar: a value type with no fixed native size is a scalar of
 /// its buffer's width up to this, and a string beyond it.

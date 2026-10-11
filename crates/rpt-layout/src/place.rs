@@ -1254,7 +1254,10 @@ impl Formatter<'_> {
         // Only some sides are set (a title underlined with a bottom border, say): draw just those.
         let (l, t) = (rect.left.0, rect.top.0);
         let (r, btm) = (l + rect.width.0, t + rect.height.0);
-        let point = |x: i32, y: i32| rpt_pages::Point { x: Twips(x), y: Twips(y) };
+        let point = |x: i32, y: i32| rpt_pages::Point {
+            x: Twips(x),
+            y: Twips(y),
+        };
         let sides = [
             (b.top, point(l, t), point(r, t)),
             (b.bottom, point(l, btm), point(r, btm)),
@@ -1311,7 +1314,13 @@ impl Formatter<'_> {
     /// section stops there. `None` when the start section is not found, the end index is out of
     /// range, or the end lies above the start. Growth of the intervening bands is not tracked (the
     /// span uses design heights); the static layout is reproduced faithfully.
-    fn design_span_height(&self, start: &str, end: u16, box_top: i32, end_bottom: i32) -> Option<i32> {
+    fn design_span_height(
+        &self,
+        start: &str,
+        end: u16,
+        box_top: i32,
+        end_bottom: i32,
+    ) -> Option<i32> {
         let flat = self.flat_sections();
         let s = flat.iter().position(|(n, _)| *n == start)?;
         let e = usize::from(end);

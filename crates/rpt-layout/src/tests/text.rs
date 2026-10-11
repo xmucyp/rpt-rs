@@ -498,7 +498,10 @@ fn line_spacing_scales_line_pitch() {
     let sh = s[0].metrics.unwrap().line_height.0;
     let dh = d[0].metrics.unwrap().line_height.0;
     // 10pt × Arial's cell-to-em ratio × 20 × 1.2
-    assert_eq!(sh, (10.0 * rpt_pages::gdi_cell_em_ratio("Arial") * 20.0 * 1.2).round() as i32);
+    assert_eq!(
+        sh,
+        (10.0 * rpt_pages::gdi_cell_em_ratio("Arial") * 20.0 * 1.2).round() as i32
+    );
     assert_eq!(dh, 2 * sh); // doubled
     assert_eq!(d[1].bounds.top.0 - d[0].bounds.top.0, dh);
 

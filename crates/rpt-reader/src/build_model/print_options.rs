@@ -52,8 +52,18 @@ pub(super) fn build_print_options(tree: &[RecordNode], logical: &[u8]) -> PrintO
         let (right, r) = margin("margin_right");
         let (top, t) = margin("margin_top");
         let (bottom, b) = margin("margin_bottom");
-        opts.margins = crate::model::PageMargins { left, right, top, bottom };
-        opts.printer_default_margins = crate::model::MarginSides { left: l, right: r, top: t, bottom: b };
+        opts.margins = crate::model::PageMargins {
+            left,
+            right,
+            top,
+            bottom,
+        };
+        opts.printer_default_margins = crate::model::MarginSides {
+            left: l,
+            right: r,
+            top: t,
+            bottom: b,
+        };
     }
 
     // The page DEVMODE (0x07): the printer's orientation, paper size, source and duplex.

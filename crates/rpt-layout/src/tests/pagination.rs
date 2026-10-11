@@ -1161,7 +1161,10 @@ fn line_spans_to_end_section() {
         })
         .expect("the spanning line op");
     let bottom = line.from.y.0.max(line.to.y.0);
-    assert_eq!(bottom, 750, "the line reaches its stored bottom in the detail section");
+    assert_eq!(
+        bottom, 750,
+        "the line reaches its stored bottom in the detail section"
+    );
 }
 
 /// A `suppress-if-blank` detail section that resolves to no visible content is dropped and reserves

@@ -23,7 +23,10 @@ fn a_report_font_is_drawn_at_the_em_its_gdi_cell_height_implies() {
     // Crystal hands the stored size to GDI as a cell height, so 10pt Arial draws at an 8.95pt em.
     let doc = rendered(&tiny_report(15840), &numeric_rows(1));
     let (_, run) = runs(&doc, "line")[0];
-    assert_eq!(run.font.size_pt, 10.0 * rpt_pages::gdi_cell_em_ratio("Arial"));
+    assert_eq!(
+        run.font.size_pt,
+        10.0 * rpt_pages::gdi_cell_em_ratio("Arial")
+    );
     assert!((run.font.size_pt - 8.951).abs() < 0.001);
 }
 
@@ -40,7 +43,10 @@ fn a_lines_baseline_sits_at_the_stored_sizes_ascent() {
 fn the_cell_to_em_ratio_is_the_families_own() {
     use rpt_pages::gdi_cell_em_ratio as r;
     assert!((r("Arial") - 0.8951).abs() < 1e-4);
-    assert!((r("arial") - 0.8951).abs() < 1e-4, "matched without regard to case");
+    assert!(
+        (r("arial") - 0.8951).abs() < 1e-4,
+        "matched without regard to case"
+    );
     assert!((r("Verdana") - 0.8228).abs() < 1e-4);
     assert!((r("Times New Roman") - 0.9030).abs() < 1e-4);
     assert!((r("Courier New") - 0.8828).abs() < 1e-4);
@@ -100,7 +106,8 @@ fn a_bottom_border_draws_only_the_bottom_side() {
     let doc = rendered(&report, &numeric_rows(1));
     let ops = &doc.pages[0].ops;
     assert!(
-        !ops.iter().any(|op| matches!(op, DrawOp::Rect(r) if r.stroke.is_some())),
+        !ops.iter()
+            .any(|op| matches!(op, DrawOp::Rect(r) if r.stroke.is_some())),
         "no four-sided frame"
     );
     let lines: Vec<_> = ops
@@ -113,7 +120,11 @@ fn a_bottom_border_draws_only_the_bottom_side() {
     assert_eq!(lines.len(), 1);
     assert_eq!(lines[0].from.y, lines[0].to.y, "horizontal");
     // The detail band starts below the 300-twip page header; the object is 240 twips tall.
-    assert_eq!(lines[0].from.y, Twips(300 + 240), "along the object's bottom edge");
+    assert_eq!(
+        lines[0].from.y,
+        Twips(300 + 240),
+        "along the object's bottom edge"
+    );
 }
 
 #[test]
@@ -184,9 +195,16 @@ fn new_page_before_does_not_break_before_the_report_body_begins() {
             )],
         ),
     );
-    report.report_definition.areas[2].format.base.new_page_before = true; // the Detail area
+    report.report_definition.areas[2]
+        .format
+        .base
+        .new_page_before = true; // the Detail area
     let doc = rendered(&report, &numeric_rows(3));
-    assert_eq!(doc.pages.len(), 3, "a page per record, and no blank first page");
+    assert_eq!(
+        doc.pages.len(),
+        3,
+        "a page per record, and no blank first page"
+    );
     let first: Vec<&str> = doc.pages[0]
         .ops
         .iter()
@@ -195,7 +213,10 @@ fn new_page_before_does_not_break_before_the_report_body_begins() {
             _ => None,
         })
         .collect();
-    assert!(first.contains(&"TITLE") && first.contains(&"line"), "page 1: {first:?}");
+    assert!(
+        first.contains(&"TITLE") && first.contains(&"line"),
+        "page 1: {first:?}"
+    );
 }
 
 #[test]
@@ -236,7 +257,13 @@ fn the_baseline_takes_the_requested_familys_ascent() {
         ..rpt_pages::FontSpec::default()
     };
     let ascent = |family: &str| crate::text::crystal_ascent_twips(&MeasuredLayout, &font(family));
-    assert!((ascent("Verdana") - 201.07).abs() < 0.1, "1.00537 × 10pt × 20");
-    assert!((ascent("Arial") - 181.05).abs() < 0.1, "0.90527 × 10pt × 20");
+    assert!(
+        (ascent("Verdana") - 201.07).abs() < 0.1,
+        "1.00537 × 10pt × 20"
+    );
+    assert!(
+        (ascent("Arial") - 181.05).abs() < 0.1,
+        "0.90527 × 10pt × 20"
+    );
     assert_eq!(rpt_pages::gdi_ascent_ratio("Some Corporate Sans"), None);
 }
