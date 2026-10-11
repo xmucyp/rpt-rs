@@ -6,7 +6,8 @@
 #[cfg(test)]
 use super::common::AxisTitles;
 use super::common::{
-    centered_disc, disc_label, slice_color, title_op, value_label, ChartCtx, SLICE_BORDER_W, WHITE,
+    centered_disc, disc_label, shows_point_labels, slice_color, title_op, value_label, ChartCtx,
+    SLICE_BORDER_W, WHITE,
 };
 #[cfg(test)]
 use rpt_model::Rect;
@@ -113,11 +114,13 @@ fn flat_pie(cx: &ChartCtx, series: &[(String, f64)]) -> Vec<DrawOp> {
                 &src,
             ));
         }
-        // Category label at the slice's outer midpoint.
-        let lr = radius as f64 * 1.02;
-        let lx = cx + (lr * mid.cos()) as i32;
-        let ly = cy + (lr * mid.sin()) as i32;
-        ops.push(disc_label(style, lx, ly, label, &src));
+        // Category label at the slice's outer midpoint, when the chart's data points show labels.
+        if shows_point_labels(style) {
+            let lr = radius as f64 * 1.02;
+            let lx = cx + (lr * mid.cos()) as i32;
+            let ly = cy + (lr * mid.sin()) as i32;
+            ops.push(disc_label(style, lx, ly, label, &src));
+        }
         angle += sweep;
     }
 
@@ -259,14 +262,16 @@ fn depth_pie(cx: &ChartCtx, series: &[(String, f64)]) -> Vec<DrawOp> {
                 &src,
             ));
         }
-        let lr = 1.04;
-        ops.push(disc_label(
-            style,
-            (cxf + rx * lr * mid.cos()) as i32,
-            (cyf + ry * lr * mid.sin() + drop) as i32,
-            label,
-            &src,
-        ));
+        if shows_point_labels(style) {
+            let lr = 1.04;
+            ops.push(disc_label(
+                style,
+                (cxf + rx * lr * mid.cos()) as i32,
+                (cyf + ry * lr * mid.sin() + drop) as i32,
+                label,
+                &src,
+            ));
+        }
     }
 
     ops
@@ -328,12 +333,17 @@ mod tests {
         }
     }
 
-    /// With "show value" off, the wedges and category labels still draw, but no percentage data label
-    /// is emitted.
+    /// With "show value" off, the wedges and (data points showing labels) the category labels still
+    /// draw, but no percentage data label is emitted.
     #[test]
     fn show_labels_false_omits_percentages() {
         let ops = pie_chart(
-            &ChartCtx::test(rect(), "Split", AxisTitles::default(), false),
+            &ChartCtx::test_with_point(
+                rect(),
+                "Split",
+                false,
+                rpt_model::ChartDataPoint::ShowLabel,
+            ),
             &series(),
             false,
         );
@@ -482,5 +492,29 @@ mod tests {
                 "crust wall stays on the front (lower) rim, below the ellipse centre"
             );
         }
+    }
+
+    /// The designer's default data point, "None", names no slice: the legend does (Crystal's render of
+    /// Top5USA_piechart has no labels around its pie).
+    #[test]
+    fn slices_are_not_named_when_the_data_points_show_nothing() {
+        let ops = pie_chart(
+            &ChartCtx::test(rect(), "Split", AxisTitles::default(), false),
+            &series(),
+            false,
+        );
+        let texts: Vec<String> = ops
+            .iter()
+            .filter_map(|o| match o {
+                DrawOp::Text(t) => Some(t.text.clone()),
+                _ => None,
+            })
+            .collect();
+        assert!(
+            texts
+                .iter()
+                .all(|t| !["Canada", "USA", "Mexico"].contains(&t.as_str())),
+            "{texts:?}"
+        );
     }
 }

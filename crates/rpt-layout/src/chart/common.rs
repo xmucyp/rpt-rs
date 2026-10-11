@@ -288,6 +288,13 @@ pub(super) fn centered_disc(rect: Rect, title_h: i32) -> (i32, i32, i32) {
     (cx, cy, radius)
 }
 
+/// Whether a pie or doughnut names each slice beside it: only when its data points are set to show
+/// their label. The designer's default, "None", draws no slice names — the legend names the slices
+/// (Crystal's own render of Top5USA_piechart).
+pub(super) fn shows_point_labels(style: ChartStyle) -> bool {
+    style.def.data_point == rpt_model::ChartDataPoint::ShowLabel
+}
+
 /// A category label centered on `(x, y)` — a 1400×200-twip label-font box the pie/doughnut families
 /// draw at each slice's outer midpoint.
 pub(super) fn disc_label(
@@ -477,6 +484,26 @@ pub(crate) fn series_legend(
     (ops, body)
 }
 
+/// Each slice's share of the whole, as a pie or doughnut legend laid out as
+/// [`Percentage`](rpt_model::ChartLegendLayout::Percentage) prints it (`24.9%`), or `None` for any
+/// other legend, or when the slices sum to nothing to take a share of.
+fn slice_shares(
+    style: ChartStyle,
+    series: &[(String, f64)],
+    per_slice: bool,
+) -> Option<Vec<String>> {
+    if !per_slice || style.def.legend_layout != rpt_model::ChartLegendLayout::Percentage {
+        return None;
+    }
+    let total: f64 = series.iter().map(|(_, v)| v.max(0.0)).sum();
+    (total > 0.0).then(|| {
+        series
+            .iter()
+            .map(|(_, v)| format!("{:.1}%", v.max(0.0) / total * 100.0))
+            .collect()
+    })
+}
+
 /// Reserve a band on `pos`'s side of `rect` for the legend, draw one (swatch + category label) entry
 /// per series point (colored to match the bars/slices), and return the legend draw-ops plus the
 /// reduced rect the chart body should draw into. A single-series group chart legends its categories
@@ -547,8 +574,22 @@ pub(crate) fn legend(
 
     match pos {
         LegendPosition::Right | LegendPosition::Left => {
-            let band_w = (rw / 4).clamp(1400, 3200);
-            let n = series.len().max(1) as i32;
+            // A pie or doughnut legend laid out as "Percentage" (the default) lists each slice's
+            // share of the whole beside its name, then a swatch-less "Total:" row (Crystal's
+            // Top5USA_piechart: "Psycho-Cycle 24.9%" … "Total: 100.0%"). The band then widens to
+            // hold the longest name beside the share column, up to half the chart.
+            let shares = slice_shares(style, series, per_slice);
+            let mut band_w = (rw / 4).clamp(1400, 3200);
+            if shares.is_some() {
+                let longest = series
+                    .iter()
+                    .map(|(l, _)| l.chars().count())
+                    .max()
+                    .unwrap_or(0);
+                let needed = pad * 2 + swatch + gap + (longest as i32 + 8) * style.label_char_w();
+                band_w = band_w.max(needed.min(rw / 2));
+            }
+            let n = (series.len() + usize::from(shares.is_some())).max(1) as i32;
             // Fit entries to the band height: when the natural pitch would overflow the box, compress
             // the pitch and scale the swatch + font down with it (matching the native legend
             // auto-fit) so a high-cardinality legend stays inside the chart rect.
@@ -582,19 +623,55 @@ pub(crate) fn legend(
                 ),
             };
             let mut y = rt + (rh - total_h).max(0) / 2;
+            // The share column holds "100.0%": six characters at the entry font, right-aligned
+            // against the band's inner edge, with the names narrowed to leave it room.
+            let share_w = if shares.is_some() {
+                (fs * 20.0 * 0.6 * 6.0) as i32
+            } else {
+                0
+            };
+            let text_left = band_left + pad + sw + gap;
+            let text_w = band_w - pad * 2 - sw - gap;
+            let share_cell = |ops: &mut Vec<DrawOp>, y: i32, text: &str| {
+                label_op(
+                    ops,
+                    text_left + text_w - share_w,
+                    y,
+                    share_w,
+                    fs,
+                    text,
+                    TextAlign::Right,
+                );
+            };
             for (i, (label, _)) in series.iter().enumerate() {
                 let sy = y + (entry_h - sw) / 2;
                 swatch_op(&mut ops, band_left + pad, sy, sw, i);
                 label_op(
                     &mut ops,
-                    band_left + pad + sw + gap,
+                    text_left,
                     sy,
-                    band_w - pad * 2 - sw - gap,
+                    text_w - share_w,
                     fs,
                     label,
                     TextAlign::Left,
                 );
+                if let Some(shares) = &shares {
+                    share_cell(&mut ops, sy, &shares[i]);
+                }
                 y += entry_h;
+            }
+            if shares.is_some() {
+                let sy = y + (entry_h - sw) / 2;
+                label_op(
+                    &mut ops,
+                    text_left,
+                    sy,
+                    text_w - share_w,
+                    fs,
+                    "Total:",
+                    TextAlign::Left,
+                );
+                share_cell(&mut ops, sy, "100.0%");
             }
             (ops, body)
         }
@@ -707,6 +784,21 @@ impl ChartCtx<'static> {
             obj_name: "G",
             show_labels,
         }
+    }
+
+    /// [`Self::test`] for a chart whose data points show `point`.
+    pub(crate) fn test_with_point(
+        rect: Rect,
+        title: &'static str,
+        show_labels: bool,
+        point: rpt_model::ChartDataPoint,
+    ) -> Self {
+        let mut ctx = Self::test(rect, title, AxisTitles::default(), show_labels);
+        ctx.style.def = Box::leak(Box::new(ChartDefinition {
+            data_point: point,
+            ..ChartDefinition::default()
+        }));
+        ctx
     }
 }
 
@@ -1924,5 +2016,62 @@ mod tests {
         assert_eq!(distinct.len(), 20, "20 distinct captured colors");
         assert_eq!(slice_color(20), slice_color(0), "cycles at 20");
         assert_eq!(slice_color(24), slice_color(4), "slice 24 reuses color 4");
+    }
+
+    /// The texts a right-hand legend of `series` draws, for a pie (`per_slice`) or a bar.
+    fn legend_texts(series: &[(String, f64)], per_slice: bool) -> Vec<String> {
+        let rect = Rect {
+            left: Twips(0),
+            top: Twips(0),
+            width: Twips(8000),
+            height: Twips(4000),
+        };
+        let (ops, _) = legend(
+            ChartStyle::test(rect.height),
+            rect,
+            LegendPosition::Right,
+            series,
+            per_slice,
+            "S",
+            "G",
+        );
+        ops.iter()
+            .filter_map(|o| match o {
+                DrawOp::Text(t) => Some(t.text.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    #[test]
+    fn a_pie_legend_lists_each_slices_share_and_the_total() {
+        // Crystal's "Percentage" legend layout, its default: "Psycho-Cycle 24.9%" … "Total: 100.0%".
+        let series = vec![
+            ("Psycho-Cycle".to_string(), 103_535.5),
+            ("Crank Components".to_string(), 81_477.29),
+            ("Others".to_string(), 230_800.0),
+        ];
+        let texts = legend_texts(&series, true);
+        assert_eq!(
+            texts,
+            [
+                "Psycho-Cycle",
+                "24.9%",
+                "Crank Components",
+                "19.6%",
+                "Others",
+                "55.5%",
+                "Total:",
+                "100.0%"
+            ]
+        );
+    }
+
+    #[test]
+    fn a_bar_legend_names_its_categories_only() {
+        // Canada - Cross Tab's bar chart stores the same "Percentage" layout; Crystal's legend for it
+        // lists the categories alone.
+        let series = vec![("A".to_string(), 1.0), ("B".to_string(), 3.0)];
+        assert_eq!(legend_texts(&series, false), ["A", "B"]);
     }
 }

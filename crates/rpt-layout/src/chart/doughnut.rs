@@ -5,7 +5,8 @@
 #[cfg(test)]
 use super::common::AxisTitles;
 use super::common::{
-    centered_disc, disc_label, slice_color, title_op, value_label, ChartCtx, SLICE_BORDER_W, WHITE,
+    centered_disc, disc_label, shows_point_labels, slice_color, title_op, value_label, ChartCtx,
+    SLICE_BORDER_W, WHITE,
 };
 #[cfg(test)]
 use rpt_model::Rect;
@@ -101,11 +102,13 @@ pub(crate) fn doughnut_chart(cx: &ChartCtx, series: &[(String, f64)]) -> Vec<Dra
                 &src,
             ));
         }
-        // Category label at the slice's outer midpoint.
-        let lr = radius * 1.02;
-        let lx = cx + (lr * mid.cos()) as i32;
-        let ly = cy + (lr * mid.sin()) as i32;
-        ops.push(disc_label(style, lx, ly, label, &src));
+        // Category label at the slice's outer midpoint, when the chart's data points show labels.
+        if shows_point_labels(style) {
+            let lr = radius * 1.02;
+            let lx = cx + (lr * mid.cos()) as i32;
+            let ly = cy + (lr * mid.sin()) as i32;
+            ops.push(disc_label(style, lx, ly, label, &src));
+        }
         angle += sweep;
     }
 
@@ -216,7 +219,7 @@ mod tests {
             height: Twips(6000),
         };
         let ops = doughnut_chart(
-            &ChartCtx::test(r, "Split", AxisTitles::default(), false),
+            &ChartCtx::test_with_point(r, "Split", false, rpt_model::ChartDataPoint::ShowLabel),
             &series(),
         );
         let rings = ops
