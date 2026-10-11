@@ -486,7 +486,9 @@ pub(crate) fn series_legend(
 
 /// Each slice's share of the whole, as a pie or doughnut legend laid out as
 /// [`Percentage`](rpt_model::ChartLegendLayout::Percentage) prints it (`24.9%`), or `None` for any
-/// other legend, or when the slices sum to nothing to take a share of.
+/// other legend, or when the slices sum to nothing to take a share of. Only a legend beside the chart
+/// (left or right) draws the share column: the one Crystal render with shares has its legend on the
+/// right, and nothing shows how a legend above or below lays them out, so those keep the names alone.
 fn slice_shares(
     style: ChartStyle,
     series: &[(String, f64)],
