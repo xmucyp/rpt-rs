@@ -495,3 +495,68 @@ fn stacked_summaries_each_print_their_own_measure() {
         .iter()
         .all(|t| t.bounds.top.0 != 521 || t.text == "East"));
 }
+
+#[test]
+fn the_grand_total_colors_fill_their_whole_band() {
+    // `RowGrandTotalColor` fills the Total column, `ColumnGrandTotalColor` the Total row, each
+    // including its label cell; where they cross, the Total row's color wins (as the default grid).
+    let red = Color {
+        a: 255,
+        r: 255,
+        g: 0,
+        b: 0,
+    };
+    let blue = Color {
+        a: 255,
+        r: 0,
+        g: 0,
+        b: 255,
+    };
+    let mut ct = crosstab_object("CT1");
+    let ReportObjectKind::CrossTab(x) = &mut ct.kind else {
+        unreachable!()
+    };
+    x.options.row_grand_total_color = Some(red);
+    x.options.column_grand_total_color = Some(blue);
+    let doc = rendered(&template_report(ct, Totals::After, 12240), &template_rows());
+    let fills: Vec<(Color, i32, i32)> = doc.pages[0]
+        .ops
+        .iter()
+        .filter_map(|op| match op {
+            DrawOp::Rect(r) => match r.fill {
+                Some(rpt_pages::Fill::Solid(c)) => Some((c, r.bounds.left.0, r.bounds.top.0)),
+                _ => None,
+            },
+            _ => None,
+        })
+        .collect();
+    let total_x = 100 + 1678 + 2 * 1328;
+    let total_y = 421 + 2 * 430;
+    // The Total column: its header and both region rows are red.
+    for y in [0, 421, 421 + 430] {
+        assert!(
+            fills.contains(&(red, total_x, y)),
+            "red at ({total_x}, {y}): {fills:?}"
+        );
+    }
+    // The Total row: its label and both quarter cells are blue, and so is the corner they share.
+    for x in [100, 100 + 1678, 100 + 1678 + 1328, total_x] {
+        assert!(
+            fills.contains(&(blue, x, total_y)),
+            "blue at ({x}, {total_y}): {fills:?}"
+        );
+    }
+    assert_eq!(fills.len(), 3 + 4, "no other cell is filled");
+}
+
+#[test]
+fn a_suppressed_crosstab_does_not_grow_its_section() {
+    let mut ct = crosstab_object("CT1");
+    ct.format.suppress.value = true;
+    let doc = rendered(&template_report(ct, Totals::After, 12240), &template_rows());
+    assert_eq!(
+        page_text_tops(&doc.pages[0], "END"),
+        vec![1281],
+        "the designed height stands"
+    );
+}

@@ -661,6 +661,10 @@ impl<'a> crate::Formatter<'a> {
         let ReportObjectKind::CrossTab(ct) = &obj.kind else {
             return None;
         };
+        // A hidden cross-tab prints nothing, so it grows nothing.
+        if obj.format.suppress.value {
+            return None;
+        }
         let available = self.printable_width() - (self.col_offset + obj.bounds.left.0);
         self.crosstab_template_layout(ct, obj, objects, available)
             .map(|lay| lay.height())
@@ -765,20 +769,22 @@ impl<'a> crate::Formatter<'a> {
             })
         };
         let opts = &ct.options;
-        // Cell fills: a template object's own background fills its cell; the grand-total colors fill
-        // their band (cross-wired as RAS names them, see `grid_ops`).
+        // Cell fills: a template object's own background fills its cell; otherwise the grand-total
+        // colors fill their whole band, labels included, the row's color winning where the two
+        // cross — as the default grid fills them (cross-wired as RAS names them, see `grid_ops`).
         for row in &lay.rows {
             for col in &lay.cols {
                 let (cb, rb) = (t.cols[col.band], t.rows[row.band]);
+                let band_color = match (rb.role, cb.role) {
+                    (Role::Total, _) => opts.column_grand_total_color,
+                    (_, Role::Total) => opts.row_grand_total_color,
+                    _ => None,
+                };
                 let fill = t
                     .objects_at(col.band, row.band)
                     .iter()
                     .find_map(|o| o.border.background_color)
-                    .or(match (cb.role, rb.role) {
-                        (Role::Total, Role::Data | Role::Total) => opts.row_grand_total_color,
-                        (Role::Data, Role::Total) => opts.column_grand_total_color,
-                        _ => None,
-                    });
+                    .or(band_color);
                 if let Some(color) = fill {
                     self.push_op(fill_rect(
                         Rect {
@@ -923,8 +929,8 @@ impl<'a> crate::Formatter<'a> {
         crate::format::render_value(v, &spec, &self.locale)
     }
 
-    /// One line of cell text, drawn as a text object of the template's prints: its font at the GDI
-    /// em, its color, its resolved alignment and Crystal's baseline.
+    /// One line of cell text, drawn as its template object draws text: in the object's font at the
+    /// GDI em, its color and its resolved alignment, on Crystal's baseline.
     fn crosstab_run(
         &self,
         o: &ReportObject,
