@@ -14,7 +14,7 @@ use crate::field_table::table::Row;
 use crate::field_table::tables as ft;
 use crate::model::{
     Color, CrossTabCellFormat, CrossTabDimension, CrossTabGridFormat, CrossTabGridOptions,
-    GroupCondition,
+    GroupCondition, SortDirection,
 };
 use crate::records::rtype::*;
 
@@ -55,12 +55,14 @@ impl CrossTabAttach {
                     &b.crosstab_columns,
                     &b.crosstab_column_periods,
                     &b.crosstab_column_suppress,
+                    &b.crosstab_column_directions,
                 );
                 fill_axis(
                     &mut ct.rows,
                     &b.crosstab_rows,
                     &b.crosstab_row_periods,
                     &b.crosstab_row_suppress,
+                    &b.crosstab_row_directions,
                 );
             }
             // Axes are cross-wired as the SDK exposes them: the column-axis grand-total level's
@@ -97,8 +99,9 @@ impl CrossTabAttach {
 /// Fill one axis's real (non-grand-total) levels from its axis-tagged grid groups.
 ///
 /// The field reference is taken only when the `0x00cb` level record omits it (designer-authored
-/// cross-tabs store the field only in the `0x00e5` grid group, not the level). The grouping period
-/// and the two suppress flags are stored *only* on the grid group, so they are always taken. The
+/// cross-tabs store the field only in the `0x00e5` grid group, not the level). The grouping period,
+/// the two suppress flags and the sort direction are stored *only* on the grid group, so they are
+/// always taken. The
 /// first level of each axis is the grand-total level (legitimately empty); the remaining levels are
 /// the real dimensions, in the same order as the grid groups.
 fn fill_axis(
@@ -106,14 +109,20 @@ fn fill_axis(
     fields: &[String],
     periods: &[Option<GroupCondition>],
     suppress: &[(bool, bool)],
+    directions: &[SortDirection],
 ) {
-    let groups = fields.iter().zip(periods.iter()).zip(suppress.iter());
-    for (level, ((field, period), suppress)) in levels.iter_mut().skip(1).zip(groups) {
+    let groups = fields
+        .iter()
+        .zip(periods.iter())
+        .zip(suppress.iter())
+        .zip(directions.iter());
+    for (level, (((field, period), suppress), direction)) in levels.iter_mut().skip(1).zip(groups) {
         if level.field_ref.is_empty() {
             level.field_ref = field.clone();
         }
         level.period = *period;
         (level.suppress_subtotal, level.suppress_label) = *suppress;
+        level.direction = *direction;
     }
 }
 
@@ -253,14 +262,12 @@ pub(super) fn collect_crosstab_dimensions(
             CROSSTAB_DIM_FIELD => {
                 if let Some(name) = &current {
                     let row = row_of(node, logical, &ft::CROSSTAB_DIM_FIELD);
-                    // Neither the grouping period nor the two suppress flags are on the `0x00cb`
-                    // level record; both are filled from the dimension's `0x00e5` grid group by
-                    // [`fill_axis`].
+                    // The grouping period, the two suppress flags and the sort direction are not on
+                    // the `0x00cb` level record; all are filled from the dimension's `0x00e5` grid
+                    // group by [`fill_axis`].
                     let dim = crate::model::CrossTabDimension {
                         field_ref: row.text("field_ref").to_owned(),
-                        period: None,
-                        suppress_subtotal: false,
-                        suppress_label: false,
+                        ..Default::default()
                     };
                     let s = out.entry(name.clone()).or_default();
                     s.dimensions.push(dim.clone());
@@ -302,7 +309,7 @@ pub(super) struct CrossTabStructure {
 
 #[cfg(test)]
 mod tests {
-    use super::{decode_cell_format, dimension_color, ft};
+    use super::{decode_cell_format, dimension_color, fill_axis, ft};
     use crate::field_table::cursor::{Piece, RecordContent, StringFormat};
     use crate::field_table::table::{read_strings, Row, Table};
     use crate::model::Color;
@@ -402,5 +409,32 @@ mod tests {
         let row = row_of_run(&ft::CROSSTAB_DIM_FIELD, &run);
         assert_eq!(row.text("field_ref"), "");
         assert_eq!(dimension_color(&row), None);
+    }
+
+    #[test]
+    fn each_level_takes_its_grid_groups_sort_direction() {
+        use crate::model::{CrossTabDimension, SortDirection};
+        // The first level of an axis is its grand total; the levels after it take their grid groups'
+        // settings in order.
+        let mut levels = vec![CrossTabDimension::default(); 3];
+        let fields = ["t.a".to_string(), "t.b".to_string()];
+        fill_axis(
+            &mut levels,
+            &fields,
+            &[None, None],
+            &[(false, false), (false, false)],
+            &[
+                SortDirection::DescendingOrder,
+                SortDirection::AscendingOrder,
+            ],
+        );
+        assert_eq!(
+            levels[0].direction,
+            SortDirection::AscendingOrder,
+            "grand total untouched"
+        );
+        assert_eq!(levels[1].direction, SortDirection::DescendingOrder);
+        assert_eq!(levels[2].direction, SortDirection::AscendingOrder);
+        assert_eq!(levels[1].field_ref, "t.a");
     }
 }

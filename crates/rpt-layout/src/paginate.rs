@@ -516,6 +516,12 @@ impl<'a> Formatter<'a> {
             .collect();
         let mut height = section.height.0;
         for (o, p) in section.objects.iter().zip(&plans) {
+            // A cross-tab prints a row per value, so it grows its section like a can-grow field.
+            if allow_grow {
+                if let Some(h) = self.crosstab_height(o, &section.objects) {
+                    height = height.max(o.bounds.top.0 + h);
+                }
+            }
             if let Some(p) = p {
                 if o.format.can_grow && p.lines.len() > 1 {
                     // Sum each line's own pitch: mixed paragraph fonts and 1.5/double/exact line

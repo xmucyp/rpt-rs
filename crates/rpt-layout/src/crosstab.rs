@@ -2,17 +2,27 @@
 //!
 //! A cross-tab pivots the data by one or more **row** dimensions (down the left) × **column**
 //! dimensions (across the top), with a **measure** (an aggregate — e.g. `Sum of {amount}`) in each
-//! cell. The decode exposes `CrossTabObject::{rows, columns}` and the measures are attributed from
-//! the report's summary definitions ([`rpt_model::crosstab_measures`]); the layout
-//! engine computes the pivot from the dataset and this module draws it as ordinary [`DrawOp`]s
-//! (cell rects + grid lines + text), so it renders identically through every backend with no new
-//! dependency (the same approach as the chart renderer).
+//! cell. The decode exposes `CrossTabObject::{rows, columns}`; the layout engine computes the pivot
+//! from the dataset and this module draws it as ordinary [`DrawOp`]s (cell rects + grid lines +
+//! text), so it renders identically through every backend with no new dependency (the same approach
+//! as the chart renderer).
+//!
+//! A cross-tab saved by Crystal stores a small **template** inside its box: a text or field object
+//! per kind of cell, each with the size, font, alignment and number format that cell prints with
+//! ([`Template`]). The grid is laid out from it as Crystal prints it, measured against Crystal's own
+//! page for *Canada - Cross Tab*: the template's bands in their stored order (so its totals print
+//! before or after the values as the template has them), a value band repeated per dimension value
+//! in the dimension's sort order, every cell its template object's extent plus the cell margin, the
+//! section grown to the grid's height, and only the columns that fit across the page. A cross-tab
+//! with no template (a model built by hand) falls back to [`grid_ops`]'s default styling.
 //!
 //! Supports one row dimension × one column dimension × every measure (measures are drawn stacked in
-//! each cell). Nested multi-level axes are not implemented.
+//! each cell). Nested multi-level axes are not implemented, and a grid taller than the page does not
+//! break across pages.
 
 use crate::place::{fill_rect, hairline_stroke};
-use rpt_model::{Color, CrossTabGridOptions, Rect, Twips};
+use rpt_formula::eval::Value;
+use rpt_model::{Color, CrossTabGridOptions, Rect, ReportObject, ReportObjectKind, Twips};
 use rpt_pages::{DrawOp, FontSpec, LineOp, ObjectKind, ObjectRef, Point, TextAlign, TextRun};
 
 const HEADER_FILL: Color = Color {
@@ -69,8 +79,9 @@ struct Cell {
 /// [`options`](CrossTabGridOptions) drive the display: grid lines are emitted only when
 /// [`show_grid`](CrossTabGridOptions::show_grid) is set.
 ///
-/// The grand totals sit first — the grand-total column right after the row labels, the grand-total
-/// row right below the column labels — matching the engine's layout. Their colors are supplied on
+/// This is the fallback for a cross-tab with no [`Template`] to lay it out by. The grand totals sit
+/// first — the grand-total column right after the row labels, the grand-total row right below the
+/// column labels. Their colors are supplied on
 /// the axis RAS names them by, which is the opposite axis to where they draw: `RowGrandTotalColor`
 /// ([`row_grand_total_color`](CrossTabGridOptions::row_grand_total_color)) fills the grand-total
 /// *column* (the per-row totals), `ColumnGrandTotalColor` the grand-total *row*. Each grand total is
@@ -282,7 +293,9 @@ pub(crate) fn grid_ops(
 impl crate::Formatter<'_> {
     /// Render a cross-tab object as a native grid: pivot the dataset by the cross-tab's
     /// first row dimension × first column dimension, aggregating every measure (stacked) into each
-    /// cell. Falls back to a placeholder + diagnostic when the pivot structure or data is missing.
+    /// cell. A cross-tab with a template is laid out from it ([`Self::emit_crosstab_template`]);
+    /// without one it falls back to the default grid, and to a placeholder + diagnostic when the
+    /// pivot structure or data is missing.
     pub(crate) fn emit_crosstab(
         &mut self,
         ct: &rpt_model::CrossTabObject,
@@ -290,6 +303,14 @@ impl crate::Formatter<'_> {
         section_name: &str,
         obj: &rpt_model::ReportObject,
     ) {
+        // A cross-tab with a template prints as Crystal lays it out; one without (a model built by
+        // hand) falls back to the default grid below.
+        let objects = self.section_objects(section_name);
+        let available = self.printable_width() - (self.col_offset + obj.bounds.left.0);
+        if let Some(lay) = self.crosstab_template_layout(ct, obj, objects, available) {
+            self.emit_crosstab_template(&lay, ct, rect, section_name, obj);
+            return;
+        }
         let row_field = ct.rows.iter().find(|d| !d.field_ref.is_empty());
         let col_field = ct.columns.iter().find(|d| !d.field_ref.is_empty());
         let (Some(row_field), Some(col_field)) = (row_field, col_field) else {
@@ -358,6 +379,591 @@ impl crate::Formatter<'_> {
         }
     }
 }
+
+// ---------------------------------------------------------------------------------------------------
+// The cross-tab as Crystal lays it out: from the cell objects stored inside its box.
+// ---------------------------------------------------------------------------------------------------
+
+/// What a template band lays out: the labels (the row-label column, the column-header row), the
+/// values of a dimension (repeated once per value), or that dimension's grand total.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Role {
+    Label,
+    Data,
+    Total,
+}
+
+/// One column or row of a cross-tab's template: its role, and where its objects start and how far
+/// they reach along the axis, in report twips. The cell it becomes is that reach plus the cell margin
+/// on both sides.
+#[derive(Debug, Clone, Copy)]
+struct Band {
+    role: Role,
+    start: i32,
+    size: i32,
+}
+
+/// A cross-tab's design-time template. Crystal stores a cross-tab as a small grid of ordinary text
+/// and field objects inside its box: the column-header field and its grand-total label across the
+/// top, the row-header field and its grand-total label down the left, and one summary field per
+/// (row band, column band) — several stacked when the grid has several measures. Each object carries
+/// the size, font, alignment and number format its cells print with, and the order of the bands is
+/// the order Crystal prints them in: a grand-total band before its values puts the totals first.
+pub(crate) struct Template<'r> {
+    /// Inset from a cell's edge to its objects: the template's first object sits this far into the
+    /// box (100 twips with cell margins on, 0 with them off).
+    margin: i32,
+    cols: Vec<Band>,
+    rows: Vec<Band>,
+    /// Every visible template object, with the (column band, row band) it belongs to.
+    cells: Vec<(usize, usize, &'r ReportObject)>,
+}
+
+impl<'r> Template<'r> {
+    /// Read the template of `ct` from the objects of its section, or `None` when its box holds no
+    /// template with one value band on each axis (the grid is then drawn from defaults).
+    pub(crate) fn find(ct: &ReportObject, objects: &'r [ReportObject]) -> Option<Template<'r>> {
+        let members: Vec<&ReportObject> = objects
+            .iter()
+            .filter(|o| {
+                matches!(
+                    o.kind,
+                    ReportObjectKind::Field(_) | ReportObjectKind::Text(_)
+                ) && o.bounds.width.0 > 0
+                    && o.bounds.height.0 > 0
+                    && crate::place::rect_contains_top_left(&ct.bounds, &o.bounds)
+            })
+            .collect();
+        let left0 = members.iter().map(|o| o.bounds.left.0).min()?;
+        let top0 = members.iter().map(|o| o.bounds.top.0).min()?;
+        let margin = (left0 - ct.bounds.left.0).max(0);
+        let role = |o: &ReportObject| match o.kind {
+            ReportObjectKind::Text(_) => Role::Total,
+            _ => Role::Data,
+        };
+        // The row-label column and the column-header row are the template's first column and row.
+        // Down the label column, each object below the header row starts a row band; across the header
+        // row, each object right of the label column starts a column band. A band's role is its label:
+        // a field names the dimension's values, a text the grand total.
+        let mut cols = vec![Band {
+            role: Role::Label,
+            start: left0,
+            size: 0,
+        }];
+        let mut rows = vec![Band {
+            role: Role::Label,
+            start: top0,
+            size: 0,
+        }];
+        for o in &members {
+            let (l, t, w, h) = (
+                o.bounds.left.0,
+                o.bounds.top.0,
+                o.bounds.width.0,
+                o.bounds.height.0,
+            );
+            if l == left0 {
+                cols[0].size = cols[0].size.max(w);
+                if t != top0 {
+                    merge_band(&mut rows, t, h, role(o));
+                }
+            }
+            if t == top0 {
+                rows[0].size = rows[0].size.max(h);
+                if l != left0 {
+                    merge_band(&mut cols, l, w, role(o));
+                }
+            }
+        }
+        cols.sort_by_key(|b| b.start);
+        rows.sort_by_key(|b| b.start);
+        let one_data = |bands: &[Band]| bands.iter().filter(|b| b.role == Role::Data).count() == 1;
+        if !one_data(&cols) || !one_data(&rows) {
+            return None;
+        }
+        let band_of = |bands: &[Band], at: i32| bands.iter().rposition(|b| b.start <= at);
+        let cells = members
+            .iter()
+            .filter_map(|o| {
+                Some((
+                    band_of(&cols, o.bounds.left.0)?,
+                    band_of(&rows, o.bounds.top.0)?,
+                    *o,
+                ))
+            })
+            .collect();
+        Some(Template {
+            margin,
+            cols,
+            rows,
+            cells,
+        })
+    }
+
+    /// The template objects of one (column band, row band) cell, top to bottom.
+    fn objects_at(&self, col: usize, row: usize) -> Vec<&'r ReportObject> {
+        let mut v: Vec<&ReportObject> = self
+            .cells
+            .iter()
+            .filter(|(c, r, _)| (*c, *r) == (col, row))
+            .map(|(_, _, o)| *o)
+            .collect();
+        v.sort_by_key(|o| (o.bounds.top.0, o.bounds.left.0));
+        v
+    }
+
+    /// The measures the grid aggregates, and for each stacked summary of a cell (top to bottom, as
+    /// in the data cell) which of them it prints: read from the summary the object names
+    /// (`Sum ({Orders.Order Amount})`), matched against the report's summaries. A summary that names
+    /// none of them prints nothing, without shifting the ones below it.
+    fn measures(
+        &self,
+        report: &rpt_model::Report,
+    ) -> (Vec<rpt_model::CrossTabMeasure>, Vec<Option<usize>>) {
+        let (dc, dr) = (self.data_col(), self.data_row());
+        let known = rpt_model::crosstab_measures(report);
+        let mut measures: Vec<rpt_model::CrossTabMeasure> = Vec::new();
+        let slots = self
+            .objects_at(dc, dr)
+            .into_iter()
+            .filter_map(|o| match &o.kind {
+                ReportObjectKind::Field(f) => Some(f),
+                _ => None,
+            })
+            .map(|f| {
+                let m = known.iter().find(|m| names_measure(&f.data_source, m))?;
+                Some(match measures.iter().position(|x| x == m) {
+                    Some(i) => i,
+                    None => {
+                        measures.push(m.clone());
+                        measures.len() - 1
+                    }
+                })
+            })
+            .collect();
+        (measures, slots)
+    }
+
+    fn data_col(&self) -> usize {
+        self.cols
+            .iter()
+            .position(|b| b.role == Role::Data)
+            .unwrap_or(0)
+    }
+
+    fn data_row(&self) -> usize {
+        self.rows
+            .iter()
+            .position(|b| b.role == Role::Data)
+            .unwrap_or(0)
+    }
+}
+
+/// Add a band starting at `start`, or widen the one already there.
+fn merge_band(bands: &mut Vec<Band>, start: i32, size: i32, role: Role) {
+    match bands.iter_mut().find(|b| b.start == start) {
+        Some(b) => b.size = b.size.max(size),
+        None => bands.push(Band { role, start, size }),
+    }
+}
+
+/// Whether a summary object's data source (`DistinctCount ({invoice.id})`, or with a second
+/// group-scope argument) names `m`.
+fn names_measure(data_source: &str, m: &rpt_model::CrossTabMeasure) -> bool {
+    let ds = data_source.trim();
+    ds.strip_prefix(m.operation.full_name())
+        .is_some_and(|rest| rest.trim_start().starts_with('('))
+        && ds.contains(&format!("{{{}}}", m.field))
+}
+
+/// One printed column or row of the grid: a template band, which of the band's values it prints,
+/// and where it sits from the grid's origin.
+#[derive(Debug, Clone, Copy)]
+struct Track {
+    band: usize,
+    /// For a value band, the index of the dimension value; `0` otherwise.
+    key: usize,
+    pos: i32,
+    size: i32,
+}
+
+/// A cross-tab laid out from its template: the computed pivot, and the columns and rows it prints.
+pub(crate) struct TemplateLayout<'r> {
+    template: Template<'r>,
+    pivot: crate::aggregate::Pivot,
+    row_dim: &'r rpt_model::CrossTabDimension,
+    col_dim: &'r rpt_model::CrossTabDimension,
+    cols: Vec<Track>,
+    rows: Vec<Track>,
+    /// For each stacked summary of a cell, the measure it prints (see [`Template::measures`]).
+    slots: Vec<Option<usize>>,
+    /// How many value columns did not fit across the page.
+    dropped_cols: usize,
+}
+
+impl TemplateLayout<'_> {
+    /// The grid's printed height, which grows its section.
+    pub(crate) fn height(&self) -> i32 {
+        self.rows.last().map_or(0, |r| r.pos + r.size)
+    }
+}
+
+/// Lay out a band's tracks along one axis: a label or total band once, a value band once per value.
+/// A grand-total band is dropped when `suppress_total` is set.
+fn tracks(bands: &[Band], margin: i32, keys: usize, suppress_total: bool) -> Vec<Track> {
+    let mut out = Vec::new();
+    let mut pos = 0;
+    for (i, b) in bands.iter().enumerate() {
+        let n = match b.role {
+            Role::Label => 1,
+            Role::Data => keys,
+            Role::Total if suppress_total => 0,
+            Role::Total => 1,
+        };
+        let size = b.size + 2 * margin;
+        for key in 0..n {
+            out.push(Track {
+                band: i,
+                key,
+                pos,
+                size,
+            });
+            pos += size;
+        }
+    }
+    out
+}
+
+impl<'a> crate::Formatter<'a> {
+    /// The objects of the report's section named `name` (empty when there is none).
+    pub(crate) fn section_objects(&self, name: &str) -> &'a [ReportObject] {
+        self.report
+            .report_definition
+            .areas
+            .iter()
+            .flat_map(|a| &a.sections)
+            .find(|s| s.name == name)
+            .map_or(&[], |s| s.objects.as_slice())
+    }
+
+    /// The page's printable width: the paper less its left and right margins.
+    pub(crate) fn printable_width(&self) -> i32 {
+        self.page_size.width.0 - self.origin.x.0 - self.report.print_options.margins.right.0
+    }
+
+    /// How tall the cross-tab `obj` prints, laid out from its template among `objects`, or `None`
+    /// when it has none (its stored box height then stands).
+    pub(crate) fn crosstab_height(
+        &self,
+        obj: &ReportObject,
+        objects: &[ReportObject],
+    ) -> Option<i32> {
+        let ReportObjectKind::CrossTab(ct) = &obj.kind else {
+            return None;
+        };
+        let available = self.printable_width() - (self.col_offset + obj.bounds.left.0);
+        self.crosstab_template_layout(ct, obj, objects, available)
+            .map(|lay| lay.height())
+    }
+
+    /// Lay out `ct` from the template objects of its section, or `None` when it has no usable
+    /// template. `available_width` is how much of the page's printable width lies right of the
+    /// cross-tab: Crystal prints only the columns that fit whole.
+    pub(crate) fn crosstab_template_layout<'r>(
+        &self,
+        ct: &'r rpt_model::CrossTabObject,
+        obj: &ReportObject,
+        objects: &'r [ReportObject],
+        available_width: i32,
+    ) -> Option<TemplateLayout<'r>>
+    where
+        'a: 'r,
+    {
+        let row_dim = ct.rows.iter().find(|d| !d.field_ref.is_empty())?;
+        let col_dim = ct.columns.iter().find(|d| !d.field_ref.is_empty())?;
+        let template = Template::find(obj, objects)?;
+        let (measures, slots) = template.measures(self.report);
+        if measures.is_empty() {
+            return None;
+        }
+        let pivot = crate::aggregate::pivot_values(
+            self.dataset,
+            self.formulas,
+            row_dim,
+            col_dim,
+            &measures,
+            Some((&self.diagnostics, &obj.name)),
+        );
+        let opts = &ct.options;
+        // The axes are cross-wired as RAS names them: suppressing the row grand totals drops the
+        // grand-total column (the per-row totals), and vice versa.
+        let mut cols = tracks(
+            &template.cols,
+            template.margin,
+            pivot.col_keys.len(),
+            opts.suppress_row_grand_totals,
+        );
+        let rows = tracks(
+            &template.rows,
+            template.margin,
+            pivot.row_keys.len(),
+            opts.suppress_column_grand_totals,
+        );
+        let fits = cols
+            .iter()
+            .take_while(|c| c.pos + c.size <= available_width)
+            .count()
+            .max(2.min(cols.len()));
+        let dropped_cols = cols[fits..]
+            .iter()
+            .filter(|c| template.cols[c.band].role == Role::Data)
+            .count();
+        cols.truncate(fits);
+        Some(TemplateLayout {
+            template,
+            pivot,
+            row_dim,
+            col_dim,
+            cols,
+            rows,
+            slots,
+            dropped_cols,
+        })
+    }
+
+    /// Draw a cross-tab laid out from its template at `rect`'s top-left: the cell fills, each cell's
+    /// objects as text in their own font, alignment and format, and the grid lines (every cell but
+    /// the empty top-left corner is outlined).
+    pub(crate) fn emit_crosstab_template(
+        &mut self,
+        lay: &TemplateLayout,
+        ct: &rpt_model::CrossTabObject,
+        rect: Rect,
+        section_name: &str,
+        obj: &ReportObject,
+    ) {
+        if lay.dropped_cols > 0 {
+            crate::push_diag(
+                &self.diagnostics,
+                rpt_pages::Diagnostic::warn(
+                    rpt_pages::DiagnosticKind::UnsupportedObject,
+                    format!(
+                        "cross-tab is wider than the page; {} column(s) that do not fit are not printed",
+                        lay.dropped_cols
+                    ),
+                )
+                .with_source(&obj.name),
+            );
+        }
+        let t = &lay.template;
+        let (x0, y0) = (rect.left.0, rect.top.0);
+        let src = |inst: Option<u32>| {
+            let r = ObjectRef::new(section_name, ObjectKind::CrossTab).named(&obj.name);
+            Some(match inst {
+                Some(i) => r.with_instance(i),
+                None => r,
+            })
+        };
+        let opts = &ct.options;
+        // Cell fills: a template object's own background fills its cell; the grand-total colors fill
+        // their band (cross-wired as RAS names them, see `grid_ops`).
+        for row in &lay.rows {
+            for col in &lay.cols {
+                let (cb, rb) = (t.cols[col.band], t.rows[row.band]);
+                let fill = t
+                    .objects_at(col.band, row.band)
+                    .iter()
+                    .find_map(|o| o.border.background_color)
+                    .or(match (cb.role, rb.role) {
+                        (Role::Total, Role::Data | Role::Total) => opts.row_grand_total_color,
+                        (Role::Data, Role::Total) => opts.column_grand_total_color,
+                        _ => None,
+                    });
+                if let Some(color) = fill {
+                    self.push_op(fill_rect(
+                        Rect {
+                            left: Twips(x0 + col.pos),
+                            top: Twips(y0 + row.pos),
+                            width: Twips(col.size),
+                            height: Twips(row.size),
+                        },
+                        color,
+                        src(None),
+                    ));
+                }
+            }
+        }
+        // Cell text.
+        for row in &lay.rows {
+            for col in &lay.cols {
+                let objects = t.objects_at(col.band, row.band);
+                let mut summary = 0;
+                for o in objects {
+                    let text = match &o.kind {
+                        ReportObjectKind::Text(tx) => tx.text.clone(),
+                        ReportObjectKind::Field(f) => {
+                            let k = summary;
+                            summary += 1;
+                            match self.crosstab_cell_text(lay, f, col, row, k) {
+                                Some(s) => s,
+                                None => continue,
+                            }
+                        }
+                        _ => continue,
+                    };
+                    if text.is_empty() {
+                        continue;
+                    }
+                    let (cb, rb) = (t.cols[col.band], t.rows[row.band]);
+                    let bounds = Rect {
+                        left: Twips(x0 + col.pos + t.margin + (o.bounds.left.0 - cb.start)),
+                        top: Twips(y0 + row.pos + t.margin + (o.bounds.top.0 - rb.start)),
+                        width: o.bounds.width,
+                        height: o.bounds.height,
+                    };
+                    let inst = self.next_instance_id;
+                    self.next_instance_id += 1;
+                    let run = self.crosstab_run(o, text, bounds, src(Some(inst)));
+                    self.push_op(run);
+                }
+            }
+        }
+        if !opts.show_grid {
+            return;
+        }
+        let (Some(last_col), Some(last_row)) = (lay.cols.last(), lay.rows.last()) else {
+            return;
+        };
+        let right = x0 + last_col.pos + last_col.size;
+        let bottom = y0 + last_row.pos + last_row.size;
+        // The corner cell (header row × label column) is not outlined: the top rule starts at the
+        // first column header, the left rule at the first row label.
+        let corner_w = lay.cols.first().map_or(0, |c| c.size);
+        let corner_h = lay.rows.first().map_or(0, |r| r.size);
+        let line = |x1: i32, y1: i32, x2: i32, y2: i32| {
+            DrawOp::Line(LineOp {
+                from: Point {
+                    x: Twips(x1),
+                    y: Twips(y1),
+                },
+                to: Point {
+                    x: Twips(x2),
+                    y: Twips(y2),
+                },
+                stroke: hairline_stroke(GRID_LINE),
+                source: src(None),
+            })
+        };
+        let mut ops = Vec::new();
+        for (i, r) in lay.rows.iter().enumerate() {
+            let from = if i == 0 { x0 + corner_w } else { x0 };
+            ops.push(line(from, y0 + r.pos, right, y0 + r.pos));
+        }
+        ops.push(line(x0, bottom, right, bottom));
+        for (i, c) in lay.cols.iter().enumerate() {
+            let from = if i == 0 { y0 + corner_h } else { y0 };
+            ops.push(line(x0 + c.pos, from, x0 + c.pos, bottom));
+        }
+        ops.push(line(right, y0, right, bottom));
+        for op in ops {
+            self.push_op(op);
+        }
+    }
+
+    /// The text a template field prints in one grid cell: a dimension value in a header, or the
+    /// measure of the cell's `k`-th stacked summary, formatted through the field's own format.
+    fn crosstab_cell_text(
+        &self,
+        lay: &TemplateLayout,
+        f: &rpt_model::FieldObject,
+        col: &Track,
+        row: &Track,
+        k: usize,
+    ) -> Option<String> {
+        let t = &lay.template;
+        let p = &lay.pivot;
+        let (cr, rr) = (t.cols[col.band].role, t.rows[row.band].role);
+        let header = |v: &Value, dim: &rpt_model::CrossTabDimension| match dim.period {
+            Some(_) => crate::aggregate::format_period_label(
+                v,
+                &self.locale,
+                crate::aggregate::LabelPeriod::from_group(dim.period),
+            ),
+            None => self.crosstab_format(f, v),
+        };
+        let k = lay.slots.get(k).copied().flatten();
+        let value = match (rr, cr) {
+            (Role::Label, Role::Data) => {
+                return Some(header(p.col_keys.get(col.key)?, lay.col_dim))
+            }
+            (Role::Data, Role::Label) => {
+                return Some(header(p.row_keys.get(row.key)?, lay.row_dim))
+            }
+            (Role::Data, Role::Data) => p.cells.get(row.key)?.get(col.key)?.get(k?)?,
+            (Role::Data, Role::Total) => p.row_totals.get(row.key)?.get(k?)?,
+            (Role::Total, Role::Data) => p.col_totals.get(col.key)?.get(k?)?,
+            (Role::Total, Role::Total) => p.grand.get(k?)?,
+            _ => return None,
+        };
+        Some(self.crosstab_format(f, value))
+    }
+
+    /// A cell value formatted through its template field. Unlike a placed field, a cross-tab cell
+    /// reserves no character cell for its negative form: Crystal prints a bracketed-negative amount
+    /// flush with the cell's edge (Canada - Cross Tab), where the same format on a group-header field
+    /// keeps a blank cell for the closing bracket (Top5USAsubCanada).
+    fn crosstab_format(&self, f: &rpt_model::FieldObject, v: &Value) -> String {
+        let vt = rpt_model::field_object_value_type(self.report, f);
+        let mut spec = crate::format::field_format_spec(f.format.as_ref(), vt, &self.locale);
+        match &mut spec {
+            rpt_format_value::FormatSpec::Number(nf) => nf.reserve_sign = false,
+            rpt_format_value::FormatSpec::Currency(cf) => cf.number.reserve_sign = false,
+            _ => {}
+        }
+        crate::format::render_value(v, &spec, &self.locale)
+    }
+
+    /// One line of cell text, drawn as a text object of the template's prints: its font at the GDI
+    /// em, its color, its resolved alignment and Crystal's baseline.
+    fn crosstab_run(
+        &self,
+        o: &ReportObject,
+        text: String,
+        bounds: Rect,
+        source: Option<ObjectRef>,
+    ) -> DrawOp {
+        let font_color = match &o.kind {
+            ReportObjectKind::Field(f) => &f.font_color,
+            ReportObjectKind::Text(t) => &t.font_color,
+            _ => unreachable!("template cells are text and field objects"),
+        };
+        let font = crate::font_of(&font_color.font);
+        let advance = Twips(self.text_layout.width_twips(&text, &font) as i32);
+        DrawOp::Text(TextRun {
+            bounds,
+            text,
+            align: crate::resolved_align(self.report, o, rpt_model::ReadingOrder::LeftToRight),
+            color: font_color.color,
+            rotation: 0.0,
+            metrics: Some(rpt_pages::TextMetrics {
+                advance,
+                ascent: Twips(crate::text::crystal_ascent_twips(self.text_layout, &font) as i32),
+                line_height: Twips(self.text_layout.line_height_twips(&font) as i32),
+            }),
+            character_spacing: Twips(0),
+            font,
+            source,
+        })
+    }
+}
+
+/// Crystal's grid rules are black.
+const GRID_LINE: Color = Color {
+    a: 255,
+    r: 0,
+    g: 0,
+    b: 0,
+};
 
 #[cfg(test)]
 mod tests {

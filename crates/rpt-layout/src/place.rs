@@ -69,7 +69,7 @@ pub(crate) fn hairline_stroke(color: Color) -> Stroke {
 /// Whether `inner`'s top-left corner lies within `outer` (inclusive). Used to detect a cross-tab's
 /// decomposed cell objects, which the decoder places flat in the section but geometrically inside the
 /// cross-tab box; a degenerate (zero-width/height) cell is matched by its corner alone.
-fn rect_contains_top_left(outer: &rpt_model::Rect, inner: &rpt_model::Rect) -> bool {
+pub(crate) fn rect_contains_top_left(outer: &rpt_model::Rect, inner: &rpt_model::Rect) -> bool {
     inner.left.0 >= outer.left.0
         && inner.left.0 <= outer.left.0 + outer.width.0
         && inner.top.0 >= outer.top.0

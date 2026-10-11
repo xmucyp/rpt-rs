@@ -24,9 +24,13 @@ renders through any backend without per-backend image embedding, and stays visib
   entry rather than listing categories, and a 3-D family draws no legend at all (its series are its depth axis, already
   labelled beside the series-axis title).
 - **Cross-tabs.** A cross-tab pivots the dataset by row × column dimensions with an aggregate measure per cell, drawn as
-  a native grid (cell rects + grid lines + text) by `rpt-layout`'s `crosstab` module. The current cut handles one row
-  dimension × one column dimension, with every measure drawn stacked in each cell; nested multi-level axes are a
-  follow-up.
+  a native grid (cell rects + grid lines + text) by `rpt-layout`'s `crosstab` module. Crystal saves a small template
+  inside the cross-tab's box — a text or field object per kind of cell, with that cell's size, font, alignment and
+  number format — and the grid is laid out from it as Crystal prints it: the template's bands in their stored order
+  (its grand totals before or after the values), each dimension in its sort order, every cell its object's extent plus
+  the cell margin, the section grown to the grid's height, and only the columns that fit across the page. The current
+  cut handles one row dimension × one column dimension, with every measure drawn stacked in each cell; nested
+  multi-level axes, and a grid taller than a page, are a follow-up.
 
 The chart *definition* decodes further than the renderer draws it: not every decoded style is drawn yet, so a heavily
 customized chart can still render with a default for one of them. What decodes is in

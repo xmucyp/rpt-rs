@@ -18,40 +18,60 @@ type ChartSeries = (String, Vec<f64>);
 /// A chart's category-axis labels paired with its series — `(categories, series)`.
 type CategorySeries = (Vec<String>, Vec<ChartSeries>);
 
+/// A cross-tab's pivot as values: each axis's keys in print order, and every measure's aggregate per
+/// cell, per row and column total, and overall. [`crosstab_pivot`] formats it with the locale's
+/// defaults; the template layout formats each value through the cell object Crystal stores for it.
+pub(crate) struct Pivot {
+    /// The row dimension's values, in print order.
+    pub row_keys: Vec<Value>,
+    /// The column dimension's values, in print order.
+    pub col_keys: Vec<Value>,
+    /// `cells[r][c][m]`: measure `m` over the rows at (row key `r`, column key `c`).
+    pub cells: Vec<Vec<Vec<Value>>>,
+    /// `row_totals[r][m]`: measure `m` across every column of row key `r`.
+    pub row_totals: Vec<Vec<Value>>,
+    /// `col_totals[c][m]`: measure `m` across every row of column key `c`.
+    pub col_totals: Vec<Vec<Value>>,
+    /// `grand[m]`: measure `m` over every row.
+    pub grand: Vec<Value>,
+}
+
 /// Compute the cross-tab pivot: for each detail row, evaluate the row/column dimension refs and
-/// the measure, accumulating the aggregate for each (row, column) cell. A dimension with a decoded
-/// date/time grouping [`period`](m::CrossTabDimension::period) buckets its axis by that interval
-/// (e.g. a monthly date column collapses to one bucket per calendar month, keyed and ordered by the
-/// period-start date and labelled `M/YYYY`) instead of keying on the raw field value; a discrete
-/// dimension keeps its first-seen value order.
+/// the measures, accumulating each measure's aggregate for every (row, column) cell and the totals.
+/// A dimension with a decoded date/time grouping [`period`](m::CrossTabDimension::period) buckets its
+/// axis by that interval (e.g. a monthly date column collapses to one bucket per calendar month,
+/// keyed by the period-start date) instead of keying on the raw field value.
+///
+/// Each axis prints in its dimension's [`direction`](m::CrossTabDimension::direction), as Crystal
+/// sorts a cross-tab's groups: ascending or descending by value. An axis with no sort keeps its
+/// first-seen order, except a date/time one, which stays ascending by instant.
+///
+/// An empty intersection is each measure over zero rows, which Crystal prints as zero, not blank.
 /// `diag` is the diagnostic sink and the label to report under (the cross-tab object's name). Passing
 /// `None` makes a per-cell formula failure silent, which is only appropriate in a unit test.
-pub(crate) fn crosstab_pivot(
+pub(crate) fn pivot_values(
     dataset: &Dataset,
     formulas: &FormulaRegistry,
-    locale: &Locale,
     row_dim: &m::CrossTabDimension,
     col_dim: &m::CrossTabDimension,
     measures: &[m::CrossTabMeasure],
     diag: Option<(&crate::DiagSink, &str)>,
-) -> crosstab::Grid {
+) -> Pivot {
     use std::collections::HashMap;
 
-    // A cross-tab draws every measure stacked in each data cell (e.g. a `Sum` line over a
-    // `DistinctCount` line), so each intersection accumulates one reducer per measure. The reducer
-    // is the same one group summaries use, so a cross-tab cell and a group summary of the same
-    // field/op agree.
+    // Each intersection accumulates one reducer per measure. The reducer is the same one group
+    // summaries use, so a cross-tab cell and a group summary of the same field/op agree.
     let nm = measures.len().max(1);
     let new_accs = || vec![rpt_data::SummaryAccumulator::new(); nm];
     let mut row_keys: Vec<(String, Value)> = Vec::new();
     let mut col_keys: Vec<(String, Value)> = Vec::new();
     let mut cells: HashMap<(String, String), Vec<rpt_data::SummaryAccumulator>> = HashMap::new();
     // Grand-total accumulators, kept alongside the per-cell ones so a total re-aggregates the raw
-    // rows (correct for Average/DistinctCount, not just Sum) rather than summing formatted cells.
+    // rows (correct for Average/DistinctCount, not just Sum) rather than summing cells.
     let mut row_acc: HashMap<String, Vec<rpt_data::SummaryAccumulator>> = HashMap::new();
     let mut col_acc: HashMap<String, Vec<rpt_data::SummaryAccumulator>> = HashMap::new();
     let mut grand_acc = new_accs();
-    // Whether an axis buckets a temporal value (drives ascending period ordering below).
+    // Whether an axis buckets a temporal value (keeps an unsorted axis ascending below).
     let (mut row_temporal, mut col_temporal) = (false, false);
 
     // One resolver for every reference this pivot reads, so a failure in a dimension or a measure is
@@ -89,29 +109,76 @@ pub(crate) fn crosstab_pivot(
         fold_all(&mut grand_acc);
     }
 
-    // A temporal (date/time-bucketed) axis is ordered by the period-start instant, matching the
-    // engine's ascending calendar order; a discrete axis keeps its first-seen order.
-    if row_temporal {
-        row_keys.sort_by(|(_, a), (_, b)| compare_values(a, b));
-    }
-    if col_temporal {
-        col_keys.sort_by(|(_, a), (_, b)| compare_values(a, b));
-    }
+    order_axis(&mut row_keys, row_dim.direction, row_temporal);
+    order_axis(&mut col_keys, col_dim.direction, col_temporal);
 
+    let values = |accs: Option<&Vec<rpt_data::SummaryAccumulator>>| -> Vec<Value> {
+        measures
+            .iter()
+            .enumerate()
+            .map(
+                |(i, meas)| match accs.and_then(|a| a[i].value(meas.operation)) {
+                    None | Some(Value::Null) => Value::Number(0.0),
+                    Some(v) => v,
+                },
+            )
+            .collect()
+    };
+    Pivot {
+        cells: row_keys
+            .iter()
+            .map(|(rk, _)| {
+                col_keys
+                    .iter()
+                    .map(|(ck, _)| values(cells.get(&(rk.clone(), ck.clone()))))
+                    .collect()
+            })
+            .collect(),
+        row_totals: row_keys
+            .iter()
+            .map(|(rk, _)| values(row_acc.get(rk)))
+            .collect(),
+        col_totals: col_keys
+            .iter()
+            .map(|(ck, _)| values(col_acc.get(ck)))
+            .collect(),
+        grand: values(Some(&grand_acc)),
+        row_keys: row_keys.into_iter().map(|(_, v)| v).collect(),
+        col_keys: col_keys.into_iter().map(|(_, v)| v).collect(),
+    }
+}
+
+/// Put one axis's keys in print order (see [`pivot_values`]).
+fn order_axis(keys: &mut [(String, Value)], direction: m::SortDirection, temporal: bool) {
+    match direction {
+        m::SortDirection::AscendingOrder => keys.sort_by(|(_, a), (_, b)| compare_values(a, b)),
+        m::SortDirection::DescendingOrder => keys.sort_by(|(_, a), (_, b)| compare_values(b, a)),
+        _ if temporal => keys.sort_by(|(_, a), (_, b)| compare_values(a, b)),
+        _ => {}
+    }
+}
+
+/// The pivot formatted with the locale's defaults, as the grid drawn when a cross-tab's box holds no
+/// cell objects to format it by: a date/time axis labelled at its period, every measure stacked in
+/// each cell. A `Count`/`DistinctCount` is a whole number, every other operation the locale's grouped
+/// 2-decimal default.
+pub(crate) fn crosstab_pivot(
+    dataset: &Dataset,
+    formulas: &FormulaRegistry,
+    locale: &Locale,
+    row_dim: &m::CrossTabDimension,
+    col_dim: &m::CrossTabDimension,
+    measures: &[m::CrossTabMeasure],
+    diag: Option<(&crate::DiagSink, &str)>,
+) -> crosstab::Grid {
+    let p = pivot_values(dataset, formulas, row_dim, col_dim, measures, diag);
     let nf = locale.number_format();
     let row_period = LabelPeriod::from_group(row_dim.period);
     let col_period = LabelPeriod::from_group(col_dim.period);
-    let row_label = |v: &Value| format_period_label(v, locale, row_period);
-    let col_label = |v: &Value| format_period_label(v, locale, col_period);
-    // Format every measure for one cell, stacked as `\n`-joined lines (drawn as separate lines by the
-    // grid renderer) — matching the engine's stacked measure values in each cross-tab cell. Each
-    // measure uses its operation's natural format: a `Count`/`DistinctCount` is a whole number, every
-    // other operation the locale's grouped 2-decimal default.
-    let fmt = move |accs: &[rpt_data::SummaryAccumulator]| -> String {
-        accs.iter()
+    let fmt = |vals: &[Value]| -> String {
+        vals.iter()
             .zip(measures)
-            .map(|(a, meas)| {
-                let v = a.value(meas.operation).unwrap_or(Value::Null);
+            .map(|(v, meas)| {
                 let mut f = nf.clone();
                 if matches!(
                     meas.operation,
@@ -124,38 +191,26 @@ pub(crate) fn crosstab_pivot(
             .collect::<Vec<_>>()
             .join("\n")
     };
-    // An empty (row, column) intersection is each measure over zero rows — the engine draws it as the
-    // formatted zero value (e.g. `0.00`), not a blank cell.
-    let empty = new_accs();
-    let cell_rows = row_keys
-        .iter()
-        .map(|(rk, _)| {
-            col_keys
-                .iter()
-                .map(|(ck, _)| fmt(cells.get(&(rk.clone(), ck.clone())).unwrap_or(&empty)))
-                .collect()
-        })
-        .collect();
-    // Per-row totals (across every column) are drawn as the grand-total column; per-column totals
-    // (across every row) as the grand-total row; `grand_total` is the corner of both.
-    let row_totals = row_keys
-        .iter()
-        .map(|(rk, _)| row_acc.get(rk).map(|a| fmt(a)).unwrap_or_default())
-        .collect();
-    let col_totals = col_keys
-        .iter()
-        .map(|(ck, _)| col_acc.get(ck).map(|a| fmt(a)).unwrap_or_default())
-        .collect();
-    let grand_total = fmt(&grand_acc);
-
     crosstab::Grid {
         corner: String::new(),
-        col_headers: col_keys.iter().map(|(_, v)| col_label(v)).collect(),
-        row_headers: row_keys.iter().map(|(_, v)| row_label(v)).collect(),
-        cells: cell_rows,
-        row_totals,
-        col_totals,
-        grand_total,
+        col_headers: p
+            .col_keys
+            .iter()
+            .map(|v| format_period_label(v, locale, col_period))
+            .collect(),
+        row_headers: p
+            .row_keys
+            .iter()
+            .map(|v| format_period_label(v, locale, row_period))
+            .collect(),
+        cells: p
+            .cells
+            .iter()
+            .map(|row| row.iter().map(|c| fmt(c)).collect())
+            .collect(),
+        row_totals: p.row_totals.iter().map(|t| fmt(t)).collect(),
+        col_totals: p.col_totals.iter().map(|t| fmt(t)).collect(),
+        grand_total: fmt(&p.grand),
     }
 }
 
@@ -756,7 +811,7 @@ fn chart_label_period(chart: &m::ChartObject) -> LabelPeriod {
 /// Format a temporal category label for the bucketing `period` in the engine's compact
 /// (no-leading-zero) category-axis date style ([`DateLabelStyle`]). Non-temporal values, and a
 /// non-date period, format through the locale default.
-fn format_period_label(bucket: &Value, locale: &Locale, period: LabelPeriod) -> String {
+pub(crate) fn format_period_label(bucket: &Value, locale: &Locale, period: LabelPeriod) -> String {
     let (year, month, day) = match bucket {
         Value::Date(d) => (d.year, d.month, d.day),
         Value::DateTime(d, _) => (d.year, d.month, d.day),

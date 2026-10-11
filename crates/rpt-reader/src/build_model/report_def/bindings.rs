@@ -111,11 +111,14 @@ pub(super) fn collect_grid_bindings(
                             b.crosstab_columns.push(f);
                             b.crosstab_column_periods.push(grid_group_condition(&group));
                             b.crosstab_column_suppress.push(grid_group_suppress(&group));
+                            b.crosstab_column_directions
+                                .push(grid_group_direction(&group));
                         }
                         Some(CrosstabAxis::Row) => {
                             b.crosstab_rows.push(f);
                             b.crosstab_row_periods.push(grid_group_condition(&group));
                             b.crosstab_row_suppress.push(grid_group_suppress(&group));
+                            b.crosstab_row_directions.push(grid_group_direction(&group));
                         }
                         None => {}
                     }
@@ -171,6 +174,10 @@ pub(super) struct GridBindings {
     /// A cross-tab's row-axis `(suppress_subtotal, suppress_label)` pairs, parallel to
     /// [`crosstab_rows`](Self::crosstab_rows).
     pub(super) crosstab_row_suppress: Vec<(bool, bool)>,
+    /// A cross-tab's column-axis sort directions, parallel to [`crosstab_columns`](Self::crosstab_columns).
+    pub(super) crosstab_column_directions: Vec<crate::model::SortDirection>,
+    /// A cross-tab's row-axis sort directions, parallel to [`crosstab_rows`](Self::crosstab_rows).
+    pub(super) crosstab_row_directions: Vec<crate::model::SortDirection>,
 }
 
 /// The axis a cross-tab dimension grid group binds, from its marker string.
@@ -221,6 +228,12 @@ fn grid_group_suppress(group: &Row) -> (bool, bool) {
         group.i("suppress_subtotal") != 0,
         group.i("suppress_label") != 0,
     )
+}
+
+/// The order a cross-tab dimension grid `0x00e5` group prints its values in: the record's direction
+/// byte, read as a report group's is (`0` ascending, `1` descending).
+fn grid_group_direction(group: &Row) -> crate::model::SortDirection {
+    crate::model::SortDirection::from_code(group.u("direction") as i32)
 }
 
 /// Whether a `0xe5` record is a chart-category / cross-tab-dimension "grid" group (rather than one

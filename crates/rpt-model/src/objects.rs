@@ -2,7 +2,8 @@
 
 use super::data_def::GroupCondition;
 use super::enums::{
-    FieldValueType, ImageFormat, LineSpacingType, PictureType, ReadingOrder, SummaryOperation,
+    FieldValueType, ImageFormat, LineSpacingType, PictureType, ReadingOrder, SortDirection,
+    SummaryOperation,
 };
 use super::format::{Border, FieldFormat, Font, FontColor, ObjectFormat};
 use super::primitives::{Color, Formula, RecordRef, Rect, Twips};
@@ -656,6 +657,19 @@ pub struct CrossTabDimension {
     /// Whether this level's group label is hidden — RAS `ICrossTabGroup.EnableSuppressLabel`.
     /// STRUCTURAL (not exported).
     pub suppress_label: bool,
+    /// The order the level's values print in, from its `0x00e5` grid group's direction byte — the
+    /// same byte a report group's sort reads. Ascending, the designer's default, is left out of the
+    /// serialized model.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "is_ascending")
+    )]
+    pub direction: SortDirection,
+}
+
+#[cfg(feature = "serde")]
+fn is_ascending(d: &SortDirection) -> bool {
+    *d == SortDirection::AscendingOrder
 }
 
 #[cfg(test)]
