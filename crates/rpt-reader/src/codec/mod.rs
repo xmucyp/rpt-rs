@@ -46,6 +46,9 @@ pub(crate) fn decode_stream_header(bytes: &[u8]) -> Result<StreamHeader> {
 /// parse the stream header, CFB-decrypt the payload, and zlib-inflate it. The result is the
 /// flat record stream consumed by [`split_records`].
 pub(crate) fn decode_contents(bytes: &[u8]) -> Result<Vec<u8>> {
+    if is_plain_contents(bytes) {
+        return Ok(bytes.to_vec());
+    }
     let mut archive = ReadArchive::new(bytes);
     let header = archive.load_stream_header()?;
     // The payload starts where the header record's own declared length ends — a length read from the
@@ -125,6 +128,9 @@ pub(crate) fn decode_contents(bytes: &[u8]) -> Result<Vec<u8>> {
 /// Deflate is non-canonical, so the output is **not** byte-identical to `raw` even for an unchanged
 /// `new_logical` — only the decoded logical bytes round-trip.
 pub(crate) fn encode_contents(raw: &[u8], new_logical: &[u8]) -> Result<Vec<u8>> {
+    if is_plain_contents(raw) {
+        return Ok(new_logical.to_vec());
+    }
     let mut archive = ReadArchive::new(raw);
     let header = archive.load_stream_header()?;
     let body_off = archive.top_record_end();
@@ -153,6 +159,19 @@ pub(crate) fn encode_contents(raw: &[u8], new_logical: &[u8]) -> Result<Vec<u8>>
     out.extend_from_slice(prefix);
     out.extend_from_slice(&body);
     Ok(out)
+}
+
+/// Whether a TSLV stream is stored **plain**: the logical record stream itself, with no `0xffff`
+/// stream header and neither encrypted nor compressed. Older reports write their streams this way
+/// (with a `Database (TLV)` stream where newer ones keep a `QESession`). A plain stream opens on an
+/// ordinary record where a wrapped one opens on its header, and must split into records end to end:
+/// damaged or foreign bytes rarely do, so they still fail with the wrapped-stream error.
+fn is_plain_contents(bytes: &[u8]) -> bool {
+    let mut archive = ReadArchive::new(bytes);
+    archive
+        .load_tslv_header()
+        .is_ok_and(|h| h.rtype != StreamHeader::RECORD_TYPE)
+        && split_records(bytes).complete
 }
 
 /// zlib level for re-deflating an encoded payload. Any valid level decodes identically; 6 is the
@@ -218,4 +237,35 @@ pub(crate) fn decode_prompt_manager(bytes: &[u8]) -> Option<String> {
     let inflated = miniz_oxide::inflate::decompress_to_vec_zlib(&plain).ok()?;
     let xml = String::from_utf8_lossy(&inflated).into_owned();
     xml.contains("CRMetaObjects").then_some(xml)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Two inline records (types 5 and 6) with no stream header: a plain `Contents` stream.
+    const PLAIN: [u8; 9] = [0x40, 0x05, 0x02, 0xaa, 0xbb, 0x40, 0x06, 0x01, 0xcc];
+
+    #[test]
+    fn a_plain_stream_is_its_own_logical_bytes() {
+        assert_eq!(decode_contents(&PLAIN).expect("plain decodes"), PLAIN);
+    }
+
+    #[test]
+    fn a_plain_stream_is_written_back_plain() {
+        let edited = [0x40, 0x05, 0x01, 0xdd];
+        let written = encode_contents(&PLAIN, &edited).expect("plain encodes");
+        assert_eq!(written, edited);
+        assert_eq!(decode_contents(&written).expect("re-decodes"), edited);
+    }
+
+    /// Bytes that do not split into records end to end are not taken as plain: they still fail as
+    /// a wrapped stream would, rather than decoding to garbage.
+    #[test]
+    fn a_stream_that_does_not_split_is_not_plain() {
+        let torn = [0x40, 0x05, 0x01, 0x11, 0x40, 0x00, 0x7f];
+        assert!(!is_plain_contents(&torn));
+        assert!(decode_contents(&torn).is_err());
+        assert!(!is_plain_contents(&[]));
+    }
 }
