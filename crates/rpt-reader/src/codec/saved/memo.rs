@@ -1,9 +1,7 @@
 //! The memo (variable-length / blob) values: each row's memo cells point into the per-batch heaps
 //! decoded from `MemoValuesStream`, whose entries are `(u32 len)(utf16z)`.
 
-use crate::codec::crypto::{cfb_decrypt, encrypt_block};
-
-use super::decrypt::{batch_iv, inflate_zlib_counted, ZLIB_CMF};
+use super::decrypt::{batch_iv, open_batch, OpenedBatch};
 use super::schema::MEMO_CELL_SIZE;
 
 /// The cipher's block length. A tail shorter than one block cannot carry a batch, since the zlib
@@ -23,16 +21,13 @@ pub(crate) fn decode_memo_heaps(memo_raw: &[u8], memo_cols: u32) -> Vec<Vec<u8>>
         memo_cols.saturating_mul(MEMO_CELL_SIZE),
         MEMO_CELL_SIZE,
     );
-    let ks = encrypt_block(&iv);
     let mut heaps = Vec::new();
     let mut off = 0usize;
     while off + CIPHER_BLOCK_LEN <= memo_raw.len() {
-        let ct = &memo_raw[off..];
-        if ct[0] ^ ks[0] != ZLIB_CMF {
-            break;
-        }
-        let plain = cfb_decrypt(&iv, ct);
-        let Some((inflated, consumed)) = inflate_zlib_counted(&plain) else {
+        let Ok(OpenedBatch {
+            inflated, consumed, ..
+        }) = open_batch(&iv, &memo_raw[off..])
+        else {
             break;
         };
         if consumed == 0 {

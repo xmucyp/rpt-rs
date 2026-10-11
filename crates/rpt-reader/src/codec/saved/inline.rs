@@ -8,7 +8,10 @@
 use crate::model::FieldValueType;
 
 use super::memo::read_memo_cell;
-use super::packed::{decode_utf16z, float_cell_to_string, int_cell_to_string, record_slot_layout};
+use super::packed::{
+    decode_single_byte_z, decode_utf16z, float_cell_to_string, int_cell_to_string,
+    record_slot_layout,
+};
 use super::schema::SavedFieldDesc;
 
 /// Reads one saved row over the stored schema.
@@ -72,6 +75,17 @@ pub(super) fn memo_value(cell: Option<&[u8]>, heap: &[u8]) -> Option<String> {
         let o = u32::from_le_bytes([c[4], c[5], c[6], c[7]]) as usize;
         let l = u32::from_le_bytes([c[8], c[9], c[10], c[11]]) as usize;
         read_memo_cell(heap, o, l)
+    })
+}
+
+/// [`memo_value`] for a Crystal 8 heap, whose values are one byte per character.
+pub(super) fn memo_value_single_byte(cell: Option<&[u8]>, heap: &[u8]) -> Option<String> {
+    cell.and_then(|c| {
+        let o = u32::from_le_bytes([c[4], c[5], c[6], c[7]]) as usize;
+        let l = u32::from_le_bytes([c[8], c[9], c[10], c[11]]) as usize;
+        let start = o.checked_add(4)?;
+        let text = decode_single_byte_z(heap.get(start..start.checked_add(l)?)?);
+        (!text.is_empty()).then_some(text)
     })
 }
 

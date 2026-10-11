@@ -31,7 +31,7 @@ use crate::coverage::{BatchProblem, SavedDataStatus};
 use crate::model::{FieldValueType, SavedBatchKind};
 
 use decrypt::decode_batch_at;
-use inline::{memo_value, RowReader};
+use inline::{memo_value, memo_value_single_byte, RowReader};
 use memo::decode_memo_heaps;
 use packed::{decode_packed_index, PackedIndex};
 use schema::{BatchShape, DESC_BATCH_BYTE_BUDGET, INDEX_BATCH_SIZE, MEMO_CELL_SIZE};
@@ -253,6 +253,12 @@ fn join_packed_memo_rows(
     index: PackedIndex,
 ) -> SavedRowset {
     let schema = &catalog.fields;
+    // Crystal 8's memo values are one byte per character, like the rest of its text.
+    let memo_value = if index.single_byte {
+        memo_value_single_byte
+    } else {
+        memo_value
+    };
     let mut rows = index.rows;
     let mut reached = 0usize;
     let problem = walk_memo_descriptors(

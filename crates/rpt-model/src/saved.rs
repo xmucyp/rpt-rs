@@ -97,9 +97,10 @@ pub struct SavedBatchInfo {
     pub cursor: usize,
     /// True if decrypting block 0 with the derived IV yields a zlib header (`0x78 …`).
     pub decrypts_zlib: bool,
-    /// Inflated byte length when the derived IV works, else `None`.
+    /// Inflated byte length when the batch opens — under the derived IV, or stored plain
+    /// (unencrypted zlib, as Crystal 8 writes it) — else `None`.
     pub inflated_len: Option<usize>,
-    /// Ciphertext bytes consumed when the derived IV works (the next batch's offset), else `None`.
+    /// Bytes consumed when the batch opens (the next batch's offset), else `None`.
     pub consumed: Option<usize>,
     /// The first `item_size` record bytes of the inflated data region (empty on failure).
     pub first_record: Vec<u8>,

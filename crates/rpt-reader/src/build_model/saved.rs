@@ -6,7 +6,7 @@
 
 use crate::codec::{decode_saved_rows, SavedFieldDesc};
 use crate::coverage::SavedDataStatus;
-use crate::model::{FieldValueType, Report, SavedColumn, SavedData};
+use crate::model::{FieldKindData, FieldValueType, Report, SavedColumn, SavedData};
 use crate::records::RecordStream;
 use crate::StreamId;
 use std::collections::HashMap;
@@ -82,7 +82,8 @@ pub(crate) fn decode_saved_data(
 
 /// Resolve each saved column's value type (schema order): a memo column is a `PersistentMemo`; every
 /// other column takes the declared type of the report database field with the same qualified name
-/// (`Table.Field`, matched on both the table's stored name and its alias), defaulting to `Int32s`.
+/// (`Table.Field`, matched on both the table's stored name and its alias) or, in a report with no
+/// tables, of the one database field definition with its name, defaulting to `Int32s`.
 /// This is what tells the inline row reader a `Number` column is an 8-byte double vs an `Int32s`
 /// 4-byte scalar vs a `String` — the DSM saved-field catalog itself carries no type code.
 fn saved_field_types(schema: &[SavedFieldDesc], report: &Report) -> Vec<FieldValueType> {
@@ -99,6 +100,24 @@ fn saved_field_types(schema: &[SavedFieldDesc], report: &Report) -> Vec<FieldVal
             }
         }
     }
+    // A Crystal 8 report has no tables to read: its database field definitions name no table. A
+    // stored column takes the type of the one such definition with its field name, if there is one.
+    for f in schema {
+        let Some((_, field)) = f.name.rsplit_once('.') else {
+            continue;
+        };
+        if by_name.contains_key(&f.name) {
+            continue;
+        }
+        let mut same_name = report
+            .data_definition
+            .field_definitions
+            .iter()
+            .filter(|d| matches!(d.kind, FieldKindData::Database(_)) && d.name == field);
+        if let (Some(d), None) = (same_name.next(), same_name.next()) {
+            by_name.insert(f.name.clone(), d.value_type);
+        }
+    }
     schema
         .iter()
         .map(|f| {
@@ -112,4 +131,52 @@ fn saved_field_types(schema: &[SavedFieldDesc], report: &Report) -> Vec<FieldVal
             }
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::model::{DbField, FieldDef};
+
+    fn stored(name: &str) -> SavedFieldDesc {
+        SavedFieldDesc {
+            rec_offset: 0,
+            name: name.into(),
+            is_memo: false,
+        }
+    }
+
+    /// A Crystal 8 report decodes no tables, so its stored columns are typed from the database
+    /// field definitions by name, when exactly one has that name.
+    #[test]
+    fn a_report_without_tables_types_its_columns_by_field_name() {
+        let field = |name: &str, value_type| FieldDef {
+            name: name.into(),
+            value_type,
+            kind: FieldKindData::Database(DbField::default()),
+            ..FieldDef::default()
+        };
+        let mut report = Report::default();
+        report.data_definition.field_definitions = vec![
+            field("Months", FieldValueType::String),
+            field("Cash", FieldValueType::Number),
+            field("Twice", FieldValueType::Number),
+            field("Twice", FieldValueType::String),
+        ];
+        let schema = [
+            stored("sp_Sales;1.Months"),
+            stored("sp_Sales;1.Cash"),
+            stored("sp_Sales;1.Twice"),
+            stored("sp_Sales;1.Missing"),
+        ];
+        assert_eq!(
+            saved_field_types(&schema, &report),
+            [
+                FieldValueType::String,
+                FieldValueType::Number,
+                FieldValueType::Int32s,
+                FieldValueType::Int32s
+            ]
+        );
+    }
 }

@@ -134,6 +134,20 @@ length (including a trailing UTF-16 NUL) followed by that many UTF-16LE bytes. A
 Each heap's batch IV is `(memo_cols, memo_cols × 12, 12)`, where `memo_cols` is the number of memo/string columns in the
 field catalog.
 
+## Crystal 8
+
+A Crystal 8.0 report stores its saved data the same way, with four differences:
+
+- **Batches are not encrypted.** Each is bare `zlib`, as the report's other streams are bare TSLV records, so a batch
+  whose bytes already open on a zlib header and inflate in full is taken as is.
+- **Text is one byte per character** (Windows-1252), in the record and in the memo heaps.
+- **Every field is followed by one pad byte.** In a packed record a string's column-table boundary is the offset of its
+  pad, and a scalar's slot is its value plus the pad. Each record ends with a pad and a `u32` record number.
+- **A column empty in every record of a batch is left out of it.** The second value of each column-table triple gives
+  the next field the batch holds, as `persistent + 1 − value`; the fields before it take no space.
+
+Its database fields name no table, so a stored column is typed by the one field definition with its name.
+
 ## Export
 
 `rpt json-dump` emits the stored data under the main report's `saved_data` key:
@@ -183,7 +197,8 @@ $ rpt saved report.rpt
 - **Main report only.** Saved data is read from the top-level `SavedRecordsStream` / `MemoValuesStream`; a subreport's
   own saved batch is never decoded, so a subreport's `saved_data` is always null even when it carries one.
 - **Column value types are name-matched.** A stored column takes its type from the report's database field of the same
-  name, falling back to a four-byte integer read when none matches. Null cells are recovered from the record's present
+  name (in a Crystal 8 report, the one field definition with its field name), falling back to a four-byte integer read
+  when none matches. Null cells are recovered from the record's present
   bitmap on the packed path only; elsewhere an absent inline cell reads as its stored bytes.
 
 ---

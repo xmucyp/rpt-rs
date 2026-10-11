@@ -103,10 +103,15 @@ pub(super) fn dump_saved(files: &[String], opts: &DumpOpts) -> Result<(), CliErr
                     }
                 }
             }
-            if b.decrypts_zlib {
+            if b.inflated_len.is_some() {
                 let _ = writeln!(
                     out,
-                    "      decrypts to zlib ✓  inflated {} B · consumed {} B",
+                    "      {} ✓  inflated {} B · consumed {} B",
+                    if b.decrypts_zlib {
+                        "decrypts to zlib"
+                    } else {
+                        "stored plain (unencrypted zlib)"
+                    },
                     b.inflated_len.unwrap_or(0),
                     b.consumed.unwrap_or(0),
                 );
@@ -139,7 +144,15 @@ pub(super) fn dump_saved(files: &[String], opts: &DumpOpts) -> Result<(), CliErr
                     }
                 }
             } else {
-                let _ = writeln!(out, "      does NOT decrypt to a zlib header ✗");
+                let _ = writeln!(
+                    out,
+                    "      {} ✗",
+                    if b.decrypts_zlib {
+                        "decrypts to a zlib header but does NOT inflate"
+                    } else {
+                        "does NOT decrypt to a zlib header"
+                    }
+                );
                 let ct: String = b.ct_head.iter().map(|x| format!("{x:02x}")).collect();
                 let _ = writeln!(out, "      ciphertext head: {ct}");
                 // Undecodable batch: report the deterministic directory + derived-IV metadata so the

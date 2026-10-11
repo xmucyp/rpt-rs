@@ -6,7 +6,7 @@
 use crate::codec::crypto::cfb_decrypt;
 use crate::model::{SavedBatchInfo, SavedBatchInspection, SavedBatchKind, SavedFieldInfo};
 
-use super::decrypt::{batch_iv4, block0_is_zlib, inflate_zlib_counted};
+use super::decrypt::{batch_iv4, block0_is_zlib, inflate_plain_batch, inflate_zlib_counted};
 use super::schema::{
     srs_directory, BatchShape, SavedCatalog, DESC_BATCH_BYTE_BUDGET, INDEX_BATCH_SIZE,
     MEMO_CELL_SIZE,
@@ -82,24 +82,26 @@ pub(crate) fn inspect_saved_batches(
         let mut inflated_len = None;
         let mut consumed = None;
         let mut first_record = Vec::new();
-        if block0_is_zlib(&iv, ct) {
+        let opened = if block0_is_zlib(&iv, ct) {
             decrypts_zlib = true;
-            let plain = cfb_decrypt(&iv, ct);
-            if let Some((inflated, used)) = inflate_zlib_counted(&plain) {
-                inflated_len = Some(inflated.len());
-                consumed = Some(used);
-                // Records sit at the tail of the batch, after the header + allocation region.
-                let need = (b.count as usize).saturating_mul(b.item_size as usize);
-                if let Some(start) = inflated.len().checked_sub(need) {
-                    let rec_end = (start + b.item_size as usize).min(inflated.len());
-                    first_record = inflated.get(start..rec_end).unwrap_or(&[]).to_vec();
-                }
-                // Advance the cursor of this batch's stream so the next batch is located.
-                if in_memo {
-                    memo_cursor += used;
-                } else {
-                    srs_cursor += used;
-                }
+            inflate_zlib_counted(&cfb_decrypt(&iv, ct))
+        } else {
+            inflate_plain_batch(ct)
+        };
+        if let Some((inflated, used)) = opened {
+            inflated_len = Some(inflated.len());
+            consumed = Some(used);
+            // Records sit at the tail of the batch, after the header + allocation region.
+            let need = (b.count as usize).saturating_mul(b.item_size as usize);
+            if let Some(start) = inflated.len().checked_sub(need) {
+                let rec_end = (start + b.item_size as usize).min(inflated.len());
+                first_record = inflated.get(start..rec_end).unwrap_or(&[]).to_vec();
+            }
+            // Advance the cursor of this batch's stream so the next batch is located.
+            if in_memo {
+                memo_cursor += used;
+            } else {
+                srs_cursor += used;
             }
         }
 

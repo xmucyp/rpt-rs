@@ -1,5 +1,5 @@
 //! The saved-batch cipher layer: build a batch's decrypt IV, gate on the zlib magic, CFB-decrypt,
-//! and inflate.
+//! and inflate. Crystal 8 stores its batches unencrypted, so a batch that is bare zlib is also taken.
 //!
 //! The batch IV is four little-endian words:
 //! `[batch_size | item_count | persistent_item_size | u16 batch_sequence]`. Batches of
@@ -78,17 +78,69 @@ pub(crate) fn decode_batch_at(
     item_size: u32,
     seq: u32,
 ) -> Result<(Vec<u8>, usize), BatchProblem> {
+    open_batch_at(raw, cursor, batch_size, item_count, item_size, seq)
+        .map(|b| (b.inflated, b.consumed))
+}
+
+/// [`decode_batch_at`], also saying whether the batch was stored plain.
+pub(crate) fn open_batch_at(
+    raw: &[u8],
+    cursor: usize,
+    batch_size: u32,
+    item_count: u32,
+    item_size: u32,
+    seq: u32,
+) -> Result<OpenedBatch, BatchProblem> {
     let ct = raw
         .get(cursor..)
         .filter(|c| !c.is_empty())
         .ok_or(BatchProblem::Absent)?;
-    let iv = batch_iv4(batch_size, item_count, item_size, seq);
-    let ks = encrypt_block(&iv);
-    if ct[0] ^ ks[0] != ZLIB_CMF {
-        return Err(BatchProblem::NotDecrypted);
+    open_batch(&batch_iv4(batch_size, item_count, item_size, seq), ct)
+}
+
+/// A batch opened by [`open_batch`].
+pub(crate) struct OpenedBatch {
+    /// The inflated batch: its header, then its records.
+    pub inflated: Vec<u8>,
+    /// The bytes it took up in its stream, which is where the next batch begins.
+    pub consumed: usize,
+    /// Whether it was stored plain rather than encrypted: a Crystal 8 file, whose records follow
+    /// every field with a pad byte and store text one byte per character.
+    pub plain: bool,
+}
+
+/// Open the batch at the head of `ct`: CFB-decrypt it under `iv` and inflate it, or, when that
+/// fails, take it as stored plain ([`inflate_plain_batch`]). Fails with `NotDecrypted` when block 0
+/// under `iv` is no zlib header, and `NotInflated` when it is but the rest will not inflate.
+pub(crate) fn open_batch(iv: &[u8; 16], ct: &[u8]) -> Result<OpenedBatch, BatchProblem> {
+    let ks = encrypt_block(iv);
+    let keyed = ct.first().is_some_and(|&b| b ^ ks[0] == ZLIB_CMF);
+    let opened = |(inflated, consumed), plain| OpenedBatch {
+        inflated,
+        consumed,
+        plain,
+    };
+    if keyed {
+        if let Some(batch) = inflate_zlib_counted(&cfb_decrypt(iv, ct)) {
+            return Ok(opened(batch, false));
+        }
     }
-    let plain = cfb_decrypt(&iv, ct);
-    inflate_zlib_counted(&plain).ok_or(BatchProblem::NotInflated)
+    match inflate_plain_batch(ct) {
+        Some(batch) => Ok(opened(batch, true)),
+        None if keyed => Err(BatchProblem::NotInflated),
+        None => Err(BatchProblem::NotDecrypted),
+    }
+}
+
+/// Inflate a batch stored **plain**: bare zlib, not encrypted. Crystal 8 writes its saved-data
+/// batches this way, as it writes its other streams. Only bytes that open on a zlib header and
+/// inflate through to a matching checksum are taken, so a ciphertext under a wrong IV is not
+/// mistaken for one.
+pub(crate) fn inflate_plain_batch(ct: &[u8]) -> Option<(Vec<u8>, usize)> {
+    match ct {
+        [ZLIB_CMF, flag, ..] if is_zlib_flag(*flag) => inflate_zlib_counted(ct),
+        _ => None,
+    }
 }
 
 /// The 4-byte zlib flag bytes that follow a `0x78` CMF byte (`(0x7800 | FLG) % 31 == 0`).
@@ -131,6 +183,32 @@ mod tests {
             decode_batch_at(&ct, 0, 1000, 248, 30, 0),
             Err(BatchProblem::NotDecrypted)
         );
+    }
+
+    /// Crystal 8 stores its batches as bare zlib; they open under any IV the directory derives.
+    #[test]
+    fn decodes_a_batch_stored_plain() {
+        let original: Vec<u8> = (0..600u32).flat_map(|i| i.to_le_bytes()).collect();
+        let z = miniz_oxide::deflate::compress_to_vec_zlib(&original, 6);
+        let (decoded, consumed) = decode_batch_at(&z, 0, 1000, 150, 16, 0).expect("decode");
+        assert_eq!(decoded, original);
+        assert_eq!(consumed, z.len());
+    }
+
+    /// A plain-looking batch that does not inflate to its checksum is still a keying failure.
+    #[test]
+    fn a_damaged_plain_batch_is_not_taken() {
+        let mut z = miniz_oxide::deflate::compress_to_vec_zlib(&[7u8; 500], 6);
+        let last = z.len() - 1;
+        z[last] ^= 0xff;
+        assert_eq!(inflate_plain_batch(&z), None);
+        let iv = batch_iv(1000, 1, 500);
+        let expected = if z[0] ^ encrypt_block(&iv)[0] == ZLIB_CMF {
+            BatchProblem::NotInflated
+        } else {
+            BatchProblem::NotDecrypted
+        };
+        assert_eq!(decode_batch_at(&z, 0, 1000, 1, 500, 0), Err(expected));
     }
 
     #[test]

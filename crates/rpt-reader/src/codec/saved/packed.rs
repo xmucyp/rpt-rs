@@ -7,7 +7,7 @@ use crate::coverage::{BatchProblem, SavedDataStatus};
 use crate::model::{FieldValueType, SavedBatchKind};
 
 use super::batch_failed;
-use super::decrypt::decode_batch_at;
+use super::decrypt::open_batch_at;
 use super::schema::{BatchShape, SavedCatalog, SavedFieldDesc, INDEX_BATCH_SIZE, MAX_ITEM_SIZE};
 
 /// The widest inline buffer read as a scalar: a value type with no fixed native size is a scalar of
@@ -18,15 +18,22 @@ const MAX_SCALAR_WIDTH: usize = 8;
 /// on-disk offset of the field that follows that column.
 const COLUMN_TABLE_STRIDE: usize = 3;
 const COLUMN_NEXT_FIELD_OFFSET: usize = 2;
+/// The second of the three values locates the next field the batch holds a value for, as
+/// `persistent + 1 - value`. Crystal 8 leaves a column that is empty in every record of a batch out
+/// of that batch's records altogether, so this is how its reader knows to skip one.
+const COLUMN_NEXT_PRESENT: usize = 1;
 
 /// How a saved inline field is stored on disk in a packed record, from its declared value type:
 /// a variable UTF-16LE string, or a fixed-width little-endian scalar of a given byte size read as a
-/// signed integer or an IEEE-754 double.
+/// signed integer or an IEEE-754 double. A Crystal 8 record stores its strings one byte per
+/// character instead, and leaves out a column the whole batch has no value for.
 #[derive(Clone, Copy)]
 enum PackedField {
     Str,
+    SingleByteStr,
     Int(usize),
     Float(usize),
+    Absent,
 }
 
 /// Resolve a field's on-disk packed encoding from its declared value type, falling back to the
@@ -144,11 +151,15 @@ fn decode_packed_record(
         if !present(pos) {
             continue;
         }
-        cells[k] = Some(match kinds.get(k).copied().unwrap_or(PackedField::Str) {
-            PackedField::Int(_) => int_cell_to_string(slot),
-            PackedField::Float(_) => float_cell_to_string(slot),
-            PackedField::Str => decode_utf16z(slot),
-        });
+        // A scalar's slot can run past its value (Crystal 8's pad byte follows every field).
+        let scalar = |sz: usize| slot.get(..sz).unwrap_or(slot);
+        cells[k] = match kinds.get(k).copied().unwrap_or(PackedField::Str) {
+            PackedField::Int(sz) => Some(int_cell_to_string(scalar(sz))),
+            PackedField::Float(sz) => Some(float_cell_to_string(scalar(sz))),
+            PackedField::Str => Some(decode_utf16z(slot)),
+            PackedField::SingleByteStr => Some(decode_single_byte_z(slot)),
+            PackedField::Absent => None,
+        };
     }
     cells
 }
@@ -170,6 +181,26 @@ pub(super) fn decode_utf16z(slot: &[u8]) -> String {
     .collect()
 }
 
+/// Decode a single-byte (Windows-1252) run up to the first NUL, as Crystal 8 stores its text.
+pub(super) fn decode_single_byte_z(slot: &[u8]) -> String {
+    /// Windows-1252's characters at `0x80..=0x9f`, where it departs from Latin-1. The five bytes it
+    /// leaves undefined map to the C1 control of the same value, as Windows itself maps them.
+    const HIGH: [char; 32] = [
+        '\u{20ac}', '\u{81}', '\u{201a}', '\u{192}', '\u{201e}', '\u{2026}', '\u{2020}',
+        '\u{2021}', '\u{2c6}', '\u{2030}', '\u{160}', '\u{2039}', '\u{152}', '\u{8d}', '\u{17d}',
+        '\u{8f}', '\u{90}', '\u{2018}', '\u{2019}', '\u{201c}', '\u{201d}', '\u{2022}', '\u{2013}',
+        '\u{2014}', '\u{2dc}', '\u{2122}', '\u{161}', '\u{203a}', '\u{153}', '\u{9d}', '\u{17e}',
+        '\u{178}',
+    ];
+    slot.iter()
+        .take_while(|&&b| b != 0)
+        .map(|&b| match b {
+            0x80..=0x9f => HIGH[usize::from(b - 0x80)],
+            _ => char::from(b),
+        })
+        .collect()
+}
+
 /// One packed index batch's on-disk layout, read from its `0x6d` directory entry: the row `count`,
 /// the fixed on-disk record width (`item_size`), and — per inline string column, in ascending record
 /// offset — the on-disk byte offset of the field that immediately follows it. String columns are
@@ -181,6 +212,9 @@ struct PackedBatchLayout {
     /// On-disk offset of the field after each string column (the k-th string's slot ends here). The
     /// last field, if a string, ends at `item_size` instead — its entry here is not used.
     next_offsets: Vec<usize>,
+    /// Per string column, the record offset of the next field the batch holds a value for (see
+    /// [`COLUMN_NEXT_PRESENT`]). Read only for a Crystal 8 batch.
+    next_present: Vec<usize>,
 }
 
 /// The packed index batches of a saved-data catalog, each with the per-string boundaries its own
@@ -192,7 +226,11 @@ struct PackedBatchLayout {
 /// report's record total for rows that do not exist. A report with memo columns continues the same
 /// stream with its memo-descriptor batches (`item_size` = `desc_item`), so the run stops at the
 /// first of those.
-fn packed_index_layouts(catalog: &SavedCatalog, desc_item: u32) -> Vec<PackedBatchLayout> {
+fn packed_index_layouts(
+    catalog: &SavedCatalog,
+    desc_item: u32,
+    persistent: usize,
+) -> Vec<PackedBatchLayout> {
     let mut cursor = 0u32;
     catalog
         .batches
@@ -206,14 +244,22 @@ fn packed_index_layouts(catalog: &SavedCatalog, desc_item: u32) -> Vec<PackedBat
         })
         .take_while(|b| desc_item == 0 || b.desc.item_size != desc_item)
         .filter(|b| b.desc.item_size > 0 && b.desc.item_size < MAX_ITEM_SIZE)
-        .map(|b| PackedBatchLayout {
-            count: b.desc.count,
-            item_size: b.desc.item_size,
-            next_offsets: b
-                .columns
-                .chunks_exact(COLUMN_TABLE_STRIDE)
-                .map(|triple| triple[COLUMN_NEXT_FIELD_OFFSET] as usize)
-                .collect(),
+        .map(|b| {
+            let triples = || b.columns.chunks_exact(COLUMN_TABLE_STRIDE);
+            PackedBatchLayout {
+                count: b.desc.count,
+                item_size: b.desc.item_size,
+                next_offsets: triples()
+                    .map(|triple| triple[COLUMN_NEXT_FIELD_OFFSET] as usize)
+                    .collect(),
+                next_present: triples()
+                    .map(|triple| {
+                        persistent
+                            .saturating_add(1)
+                            .saturating_sub(triple[COLUMN_NEXT_PRESENT] as usize)
+                    })
+                    .collect(),
+            }
         })
         .collect()
 }
@@ -231,13 +277,27 @@ fn packed_index_layouts(catalog: &SavedCatalog, desc_item: u32) -> Vec<PackedBat
 /// string. The last field always ends at `item_size`. The value type only selects how a
 /// **non-compacted** field is read (scalar vs. fixed short string); a compacted field is always a
 /// string.
+///
+/// A Crystal 8 batch (`crystal8` holds its [`PackedBatchLayout::next_present`]) differs in three
+/// ways. Every field is followed by one pad byte, so a string's boundary is the offset of its pad.
+/// Text is one byte per character. And the fields between a string and the next one the batch holds
+/// a value for are left out: they take no space and read as empty.
 fn packed_ondisk_layout(
     schema: &[SavedFieldDesc],
     field_types: &[FieldValueType],
     persistent: usize,
     item_size: usize,
     next_offsets: &[usize],
+    crystal8: Option<&[usize]>,
 ) -> (Vec<usize>, Vec<PackedField>, usize) {
+    let pad = usize::from(crystal8.is_some());
+    let text = if crystal8.is_some() {
+        PackedField::SingleByteStr
+    } else {
+        PackedField::Str
+    };
+    // Crystal 8: fields below this record offset are absent from the batch.
+    let mut absent_below = 0usize;
     let n = schema.len();
     let (pwidths, bitmap_w) = record_slot_layout(schema, persistent);
     let mut order: Vec<usize> = (0..n).collect();
@@ -248,19 +308,26 @@ fn packed_ondisk_layout(
     let mut cur = bitmap_w;
     let mut si = 0usize;
     for (idx, &k) in order.iter().enumerate() {
+        if schema[k].rec_offset < absent_below {
+            kinds[k] = PackedField::Absent;
+            continue;
+        }
         let pw = pwidths.get(k).copied().unwrap_or(0);
         let last = idx + 1 == order.len();
         let boundary = next_offsets.get(si).copied();
         let compacted =
             si < next_offsets.len() && (last || boundary.unwrap_or(usize::MAX) <= cur + pw);
         let (w, kind) = if compacted {
+            if let Some(next) = crystal8.and_then(|n| n.get(si)) {
+                absent_below = *next;
+            }
             si += 1;
-            let end = if last {
+            let end = if last && pad == 0 {
                 item_size
             } else {
                 boundary.unwrap_or(item_size)
             };
-            (end.saturating_sub(cur), PackedField::Str)
+            (end.saturating_sub(cur) + pad, text)
         } else {
             // Non-compacted: a scalar occupies its natural on-disk size (`Int`/`Float` payload — the
             // record may carry trailing padding a `pw`-wide slot would wrongly swallow); a fixed
@@ -270,11 +337,10 @@ fn packed_ondisk_layout(
                 .copied()
                 .unwrap_or(FieldValueType::Int32s);
             let kind = packed_field(vt, pw);
-            let w = match kind {
-                PackedField::Int(sz) | PackedField::Float(sz) => sz,
-                PackedField::Str => pw,
-            };
-            (w, kind)
+            match kind {
+                PackedField::Int(sz) | PackedField::Float(sz) => (sz + pad, kind),
+                _ => (pw, text),
+            }
         };
         widths[k] = w;
         kinds[k] = kind;
@@ -304,13 +370,14 @@ pub(crate) fn decode_packed_index(
 ) -> PackedIndex {
     let schema = &catalog.fields;
     let persistent = shape.persistent as usize;
-    let layouts = packed_index_layouts(catalog, shape.desc_item);
+    let layouts = packed_index_layouts(catalog, shape.desc_item, persistent);
     let record_count: u32 = layouts.iter().map(|l| l.count).sum();
     let mut first_problem: Option<SavedDataStatus> = None;
     let mut rows: Vec<Vec<Option<String>>> = Vec::new();
     let mut cursor = 0usize;
+    let mut single_byte = false;
     for (k, lay) in layouts.iter().enumerate() {
-        let (inf, consumed) = match decode_batch_at(
+        let batch = match open_batch_at(
             srs_raw,
             cursor,
             INDEX_BATCH_SIZE,
@@ -324,7 +391,9 @@ pub(crate) fn decode_packed_index(
                 break;
             }
         };
-        cursor += consumed;
+        let inf = batch.inflated;
+        cursor += batch.consumed;
+        single_byte |= batch.plain;
         let is = lay.item_size as usize;
         let need = lay.count as usize * is;
         let Some(start) = inf.len().checked_sub(need) else {
@@ -337,8 +406,15 @@ pub(crate) fn decode_packed_index(
         };
         // The batch's own column table gives the compacted-string boundaries; the layout is resolved
         // structurally from it (no dependence on a resolved string count).
-        let (widths, kinds, bitmap_w) =
-            packed_ondisk_layout(schema, field_types, persistent, is, &lay.next_offsets);
+        let crystal8 = batch.plain.then_some(lay.next_present.as_slice());
+        let (widths, kinds, bitmap_w) = packed_ondisk_layout(
+            schema,
+            field_types,
+            persistent,
+            is,
+            &lay.next_offsets,
+            crystal8,
+        );
         for i in 0..lay.count as usize {
             let rec = &inf[start + i * is..start + (i + 1) * is];
             rows.push(decode_packed_record(rec, schema, &kinds, &widths, bitmap_w));
@@ -349,6 +425,7 @@ pub(crate) fn decode_packed_index(
         record_count,
         cursor,
         problem: first_problem,
+        single_byte,
     }
 }
 
@@ -362,6 +439,9 @@ pub(crate) struct PackedIndex {
     pub cursor: usize,
     /// The first batch that would not decode.
     pub problem: Option<SavedDataStatus>,
+    /// Whether the batches were Crystal 8's, which store text one byte per character — memo values
+    /// included.
+    pub single_byte: bool,
 }
 
 #[cfg(test)]
@@ -460,7 +540,7 @@ mod tests {
         let item_size = 60usize;
         let next_offsets = vec![30usize, 42]; // s1→n at 30; s2 is last so 42 is unused (item_size wins)
         let (widths, kinds, bitmap_w) =
-            packed_ondisk_layout(&schema, &field_types, 300, item_size, &next_offsets);
+            packed_ondisk_layout(&schema, &field_types, 300, item_size, &next_offsets, None);
         assert_eq!(bitmap_w, 2);
         // d: [2..6]=4 (Date); s1: [6..30]=24; n: [30..38]=8 (Number); s2: [38..60]=22 (to item_size)
         assert_eq!(widths, vec![4, 24, 8, 22]);
@@ -485,7 +565,7 @@ mod tests {
         let item_size = 26usize; // bitmap 2 + big 12 + code 4 + number 8
         let next_offsets = vec![14usize]; // big ends at on-disk 14; code + number are fixed
         let (widths, kinds, bitmap_w) =
-            packed_ondisk_layout(&schema, &field_types, 212, item_size, &next_offsets);
+            packed_ondisk_layout(&schema, &field_types, 212, item_size, &next_offsets, None);
         assert_eq!(bitmap_w, 2);
         // big: [2..14]=12 (compacted); code: fixed persistent width 4; number: last → item_size-cur.
         assert_eq!(widths[0], 12);
@@ -493,6 +573,139 @@ mod tests {
         assert!(matches!(kinds[0], PackedField::Str)); // compacted
         assert!(matches!(kinds[1], PackedField::Str)); // fixed short string, still read as string
         assert!(matches!(kinds[2], PackedField::Float(8)));
+    }
+
+    /// A Crystal 8 index batch: bare zlib over a short header and `records`, under a directory
+    /// entry with one string column whose table is `column`.
+    fn crystal8_batch(
+        fields: Vec<SavedFieldDesc>,
+        persistent: u32,
+        item_size: u32,
+        column: [u32; 3],
+        records: &[Vec<u8>],
+    ) -> (SavedCatalog, Vec<u8>) {
+        let mut inflated = vec![0u8; 8];
+        for r in records {
+            assert_eq!(r.len(), item_size as usize);
+            inflated.extend_from_slice(r);
+        }
+        let stream = miniz_oxide::deflate::compress_to_vec_zlib(&inflated, 6);
+        let catalog = SavedCatalog {
+            item_size: Some(persistent),
+            batches: vec![super::super::schema::SavedBatch {
+                desc: super::super::schema::BatchDesc {
+                    count: records.len() as u32,
+                    item_size,
+                    stream_off: 0,
+                    stream_len: stream.len() as u32,
+                },
+                columns: column.to_vec(),
+                bytes: Vec::new(),
+            }],
+            fields,
+        };
+        (catalog, stream)
+    }
+
+    /// One Crystal 8 record: the present-bitmap byte, then each `(value, slot width)` followed by
+    /// its pad byte, then the record number.
+    fn crystal8_record(bitmap: u8, slots: &[(&[u8], usize)], number: u32) -> Vec<u8> {
+        let mut rec = vec![bitmap];
+        for (value, width) in slots {
+            let mut slot = value.to_vec();
+            slot.resize(*width, 0);
+            rec.extend_from_slice(&slot);
+            rec.push(0);
+        }
+        rec.extend_from_slice(&number.to_le_bytes());
+        rec
+    }
+
+    /// The layout of a Crystal 8 summary (from a public past-due report): a store name compacted
+    /// to its batch's longest, three amounts, each field followed by a pad byte, and single-byte
+    /// text.
+    #[test]
+    fn decodes_a_crystal8_packed_batch() {
+        let fields = vec![
+            desc("sp;1.Store", 1),
+            desc("sp;1.Credit", 103),
+            desc("sp;1.Collected", 112),
+            desc("sp;1.Balance", 121),
+        ];
+        let types = [
+            FieldValueType::String,
+            FieldValueType::Number,
+            FieldValueType::Number,
+            FieldValueType::Number,
+        ];
+        let cents = |v: f64| (v * SAVED_NUMERIC_SCALE).to_le_bytes();
+        let (credit, paid, owed) = (cents(1_645_495.0), cents(376_820.0), cents(1_268_675.0));
+        let records = [
+            crystal8_record(
+                0b1111,
+                &[(b"CAF\xc9 \x80", 12), (&credit, 8), (&paid, 8), (&owed, 8)],
+                0,
+            ),
+            // Nothing collected: the bitmap leaves that field out, though its slot is still there.
+            crystal8_record(
+                0b1011,
+                &[
+                    (b"HEAD OFFICE", 12),
+                    (&credit, 8),
+                    (&[0; 8], 8),
+                    (&credit, 8),
+                ],
+                1,
+            ),
+        ];
+        // The store's slot ends at 13 (its pad byte); the next field present is Credit, at
+        // 134 + 1 - 32 = 103.
+        let (catalog, stream) = crystal8_batch(fields, 134, 45, [102, 32, 13], &records);
+        let shape = BatchShape::of(&catalog);
+        let index = decode_packed_index(&catalog, &stream, &types, &shape);
+        assert_eq!(index.problem, None);
+        assert!(index.single_byte);
+        fn row(r: &[Option<String>]) -> Vec<Option<&str>> {
+            r.iter().map(|c| c.as_deref()).collect()
+        }
+        assert_eq!(
+            row(&index.rows[0]),
+            [
+                Some("CAFÉ €"),
+                Some("1645495"),
+                Some("376820"),
+                Some("1268675")
+            ]
+        );
+        assert_eq!(
+            row(&index.rows[1]),
+            [Some("HEAD OFFICE"), Some("1645495"), None, Some("1645495")]
+        );
+    }
+
+    /// Crystal 8 leaves a column that is empty in every record of a batch out of it: the column
+    /// table points past it, and it takes no space.
+    #[test]
+    fn a_crystal8_column_empty_across_its_batch_takes_no_space() {
+        let fields = vec![desc("T.name", 1), desc("T.note", 40), desc("T.qty", 80)];
+        let types = [
+            FieldValueType::String,
+            FieldValueType::String,
+            FieldValueType::Int32s,
+        ];
+        let records = [crystal8_record(
+            0b101,
+            &[(b"ABCD", 5), (&7i32.to_le_bytes(), 4)],
+            0,
+        )];
+        // Name ends at 6; the next field present is qty, at 90 + 1 - 11 = 80.
+        let (catalog, stream) = crystal8_batch(fields, 90, 16, [39, 11, 6], &records);
+        let index = decode_packed_index(&catalog, &stream, &types, &BatchShape::of(&catalog));
+        assert_eq!(index.problem, None);
+        assert_eq!(
+            index.rows[0],
+            [Some("ABCD".to_string()), None, Some("7".to_string())]
+        );
     }
 
     #[test]
