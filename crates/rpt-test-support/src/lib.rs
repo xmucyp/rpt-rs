@@ -104,6 +104,7 @@ pub fn collect_rpt_files(dir: &Path, out: &mut Vec<PathBuf>) {
 /// For null cells or programmatically generated rows, construct [`SavedData`] directly.
 pub fn saved_data(columns: &[(&str, FieldValueType)], rows: &[&[&str]]) -> SavedData {
     SavedData {
+        binary_cells: Vec::new(),
         record_count: rows.len() as u32,
         columns: columns
             .iter()

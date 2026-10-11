@@ -98,17 +98,21 @@ fn a_packed_report_with_a_memo_column_decodes_every_row() {
     );
 
     // The first row, checked against the seed database it was saved from: inline strings from the
-    // packed slots, a scaled double, and the memo cell resolved from the heap (a PNG, so it reads as
-    // text only up to its first NUL).
+    // packed slots, a scaled double, and a binary memo resolved as a complete PNG from the heap.
     let row = &saved.rows[0];
     assert_eq!(row[0].as_deref(), Some("Compact Cartridge 393"));
     assert_eq!(row[5].as_deref(), Some("SKU-000293"));
     assert_eq!(row[6], None, "the seed's description is NULL");
     assert_eq!(row[7].as_deref(), Some("24.34"));
     assert_eq!(row[8].as_deref(), Some("JPY"));
-    assert!(row[11]
-        .as_deref()
-        .is_some_and(|s| s.starts_with('\u{5089}')));
+    assert!(row[11].is_none(), "binary image must not decode as text");
+    let image = saved
+        .binary_cells
+        .iter()
+        .find(|c| c.row == 0 && c.column == 11)
+        .expect("first product's image");
+    assert!(image.data.starts_with(b"\x89PNG\r\n\x1a\n"));
+    assert!(image.data.ends_with(b"\0\0\0\0IEND\xaeB`\x82"));
     assert_eq!(row[12].as_deref(), Some("Emerald Systems"));
     assert!(rpt.decode_coverage().is_complete());
 }

@@ -241,6 +241,7 @@ fn crosstab_object(name: &str) -> ReportObject {
 /// Build `SavedData` of `n` single-column numeric rows keyed `t.x`.
 fn numeric_rows(n: usize) -> SavedData {
     SavedData {
+        binary_cells: Vec::new(),
         record_count: n as u32,
         columns: vec![SavedColumn {
             name: "t.x".into(),
@@ -582,6 +583,7 @@ fn subreport_rows(name: &str, rows: usize, detail_h: i32) -> rpt_model::Subrepor
         )],
     )];
     sub.saved_data = Some(SavedData {
+        binary_cells: Vec::new(),
         record_count: rows as u32,
         columns: vec![SavedColumn {
             name: "s.v".into(),

@@ -299,17 +299,29 @@ impl SavedDataSource {
         // The saved-data path re-types exactly as the live-DB one does, so it can substitute a type
         // just as silently — it tracks coercions the same way.
         let mut log = CoercionLog::new(&columns);
+        // Index sparse blobs once: scanning all binary cells for each column would make a saved
+        // image-heavy report quadratic. Text cells continue through the existing coercion path.
+        let binary_cells: BTreeMap<_, _> = saved
+            .binary_cells
+            .iter()
+            .map(|c| ((c.row, c.column), &c.data))
+            .collect();
         let rows = saved
             .rows
             .iter()
-            .map(|stored| {
+            .enumerate()
+            .map(|(row_index, stored)| {
                 let mut row = Row::default();
                 for (i, col) in columns.iter().enumerate() {
-                    // Saved-data cells are stored as text; wrap each in a text [`Cell`] to re-type.
-                    let cell = stored
-                        .get(i)
-                        .and_then(|c| c.as_ref())
-                        .map(|s| Cell::Text(s.clone()));
+                    let cell = binary_cells
+                        .get(&(row_index, i))
+                        .map(|data| Cell::Bytes((*data).clone()))
+                        .or_else(|| {
+                            stored
+                                .get(i)
+                                .and_then(|c| c.as_ref())
+                                .map(|s| Cell::Text(s.clone()))
+                        });
                     let (value, coerced) = cell_to_value_reporting(col.value_type, cell.as_ref());
                     log.note(i, coerced, cell.as_ref());
                     row.insert(&col.name, value);
@@ -1126,9 +1138,40 @@ mod tests {
     }
 
     #[test]
+    fn saved_binary_cells_reach_the_runtime_as_bytes() {
+        let bytes = vec![0x89, b'P', b'N', b'G', 0, 0, 0xff];
+        let saved = SavedData {
+            record_count: 2,
+            columns: vec![
+                SavedColumn {
+                    name: "t.image".into(),
+                    value_type: FieldValueType::Blob,
+                },
+                SavedColumn {
+                    name: "t.memo".into(),
+                    value_type: FieldValueType::PersistentMemo,
+                },
+            ],
+            rows: vec![vec![None, Some("東京".into())], vec![None, None]],
+            binary_cells: vec![rpt_model::SavedBinaryCell {
+                row: 0,
+                column: 0,
+                data: bytes.clone(),
+            }],
+        };
+        let source = SavedDataSource::new(&saved);
+        let rows = source.rows();
+        assert_eq!(rows[0].get("image"), Some(&Value::Bytes(bytes)));
+        assert_eq!(rows[0].get("memo"), Some(&Value::Str("東京".into())));
+        assert_eq!(rows[1].get("image"), Some(&Value::Null));
+        assert!(source.coercions().is_empty());
+    }
+
+    #[test]
     fn from_report_retypes_a_serial_column_declared_datetime() {
         // A saved batch that stored `orders.created_at` (a DateTime field) as an Int32s serial.
         let saved = SavedData {
+            binary_cells: Vec::new(),
             record_count: 2,
             columns: vec![
                 SavedColumn {

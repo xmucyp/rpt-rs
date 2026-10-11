@@ -66,6 +66,7 @@ fn renders_field_heading_text() {
 #[test]
 fn paginates_when_body_overflows() {
     let saved = SavedData {
+        binary_cells: Vec::new(),
         record_count: 20,
         columns: vec![SavedColumn {
             name: "t.x".into(),
@@ -1210,6 +1211,7 @@ fn suppress_if_blank_section_reserves_no_space_when_empty() {
             ),
         ];
         let saved = SavedData {
+            binary_cells: Vec::new(),
             record_count: rows as u32,
             columns: vec![SavedColumn {
                 name: "t.x".into(),
@@ -1380,6 +1382,7 @@ fn paging_limit_report(
         })
         .collect();
     let saved = SavedData {
+        binary_cells: Vec::new(),
         record_count: rows.len() as u32,
         columns: vec![
             SavedColumn {

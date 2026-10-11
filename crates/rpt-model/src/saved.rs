@@ -13,8 +13,60 @@ pub struct SavedData {
     pub record_count: u32,
     /// The stored columns, in record order.
     pub columns: Vec<SavedColumn>,
-    /// Row-major cell values in their stored string form; `None` = a null cell.
+    /// Row-major textual cells; `None` is null unless `binary_cells` supplies that position.
     pub rows: Vec<Vec<Option<String>>>,
+    /// Sparse binary cells, kept separately so image bytes never pass through UTF-16 decoding.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Vec::is_empty")
+    )]
+    pub binary_cells: Vec<SavedBinaryCell>,
+}
+
+/// One non-null binary saved value. Its row/column indices are zero-based, like `SavedData::rows`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct SavedBinaryCell {
+    /// Zero-based record index.
+    pub row: usize,
+    /// Zero-based index into the saved columns.
+    pub column: usize,
+    /// The entire descriptor payload, including embedded zero bytes. JSON represents it as hex.
+    #[cfg_attr(feature = "serde", serde(with = "crate::hex_bytes"))]
+    pub data: Vec<u8>,
+}
+
+#[cfg(all(test, feature = "serde"))]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn binary_saved_data_round_trips_without_changing_text_cells() {
+        let saved = SavedData {
+            record_count: 1,
+            rows: vec![vec![Some("東京".into()), None]],
+            binary_cells: vec![SavedBinaryCell {
+                row: 0,
+                column: 1,
+                data: vec![0x89, 0, 0xff],
+            }],
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&saved).expect("serialize");
+        assert!(json.contains("\"data\":\"8900ff\""), "{json}");
+        assert_eq!(
+            serde_json::from_str::<SavedData>(&json).expect("deserialize"),
+            saved
+        );
+        // Existing textual snapshots remain readable without the new optional binary collection.
+        let old: SavedData =
+            serde_json::from_str(r#"{"record_count":1,"columns":[],"rows":[["memo"]]}"#)
+                .expect("old shape");
+        assert!(old.binary_cells.is_empty());
+        assert!(!serde_json::to_string(&old)
+            .unwrap()
+            .contains("binary_cells"));
+    }
 }
 
 /// One stored saved-data column.

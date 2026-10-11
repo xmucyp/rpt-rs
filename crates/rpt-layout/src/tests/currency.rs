@@ -156,6 +156,7 @@ fn currency_subreport(rows: usize) -> rpt_model::Subreport {
         )],
     )];
     sub.saved_data = Some(SavedData {
+        binary_cells: Vec::new(),
         record_count: rows as u32,
         columns: vec![SavedColumn {
             name: "s.amt".into(),
@@ -320,6 +321,7 @@ fn highlighted(value: &str) -> rpt_pages::PagedDocument {
     }
     report.report_definition.areas[1].sections[0].objects = vec![obj];
     let saved = SavedData {
+        binary_cells: Vec::new(),
         record_count: 1,
         columns: vec![SavedColumn {
             name: "t.x".into(),

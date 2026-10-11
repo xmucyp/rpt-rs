@@ -4,7 +4,7 @@
 //! `SavedRecordsStream` holds the record-**index** batches (a fixed-width record per row: a leading
 //! present bitmap, then a fixed slot per inline field — scalars at their natural width, strings as a
 //! NUL-terminated UTF-16LE run filling the slot) followed by the memo-**descriptor** batches; and
-//! `MemoValuesStream` holds the memo-value heaps (`(u32 len)(utf16z)` entries). Each batch is
+//! `MemoValuesStream` holds the memo-value heaps (`(u32 len)(text or binary payload)` entries). Each batch is
 //! `zlib(records)` encrypted with the `Contents` modified-AES-CFB cipher.
 //!
 //! The module is split by responsibility: [`schema`] holds the catalog this layer is handed — the
@@ -28,7 +28,7 @@ pub(crate) use inspect::inspect_saved_batches;
 pub(crate) use schema::{BatchDesc, SavedBatch, SavedCatalog, SavedFieldDesc};
 
 use crate::coverage::{BatchProblem, SavedDataStatus};
-use crate::model::{FieldValueType, SavedBatchKind};
+use crate::model::{FieldValueType, SavedBatchKind, SavedBinaryCell};
 
 use decrypt::decode_batch_at;
 use inline::{memo_value, memo_value_single_byte, RowReader};
@@ -46,6 +46,8 @@ use schema::{BatchShape, DESC_BATCH_BYTE_BUDGET, INDEX_BATCH_SIZE, MEMO_CELL_SIZ
 pub(crate) struct SavedRowset {
     /// The decoded rows, in record order, each cell in schema order.
     pub rows: Vec<Vec<Option<String>>>,
+    /// Binary payloads at their original row/column positions, separate from the textual cells.
+    pub binary_cells: Vec<SavedBinaryCell>,
     /// The row total the batch directory claims, independent of how many actually decoded.
     pub record_count: u32,
     /// What the decode made of the batches.
@@ -79,6 +81,7 @@ impl SavedRowset {
         };
         SavedRowset {
             rows,
+            binary_cells: Vec::new(),
             record_count,
             status: match first_problem {
                 Some(p) if !decoded.is_complete() => p,
@@ -132,7 +135,7 @@ pub(crate) fn decode_saved_rows(
         if shape.memo_cols == 0 {
             return SavedRowset::walked(index.rows, index.record_count, index.problem);
         }
-        return join_packed_memo_rows(catalog, srs_raw, memo_raw, &shape, index);
+        return join_packed_memo_rows(catalog, srs_raw, memo_raw, &shape, index, field_types);
     }
 
     let index = read_index_records(srs_raw, &index_counts, &shape);
@@ -144,7 +147,7 @@ pub(crate) fn decode_saved_rows(
         let rows = index
             .records
             .chunks_exact(shape.index_item as usize)
-            .map(|rec| reader.row(rec, &[], &[]))
+            .map(|rec| reader.row(rec, &[], &[], 0, &mut Vec::new()))
             .collect();
         return SavedRowset::walked(rows, index.record_count, index.problem);
     }
@@ -222,6 +225,7 @@ fn read_memo_rows(
 ) -> SavedRowset {
     let index_item = shape.index_item as usize;
     let mut rows: Vec<Vec<Option<String>>> = Vec::new();
+    let mut binary_cells = Vec::new();
     let problem = walk_memo_descriptors(
         catalog,
         srs_raw,
@@ -233,10 +237,12 @@ fn read_memo_rows(
                 .records
                 .get(global * index_item..(global + 1) * index_item)
                 .unwrap_or(&[]);
-            rows.push(reader.row(idx_rec, cells, heap));
+            rows.push(reader.row(idx_rec, cells, heap, global, &mut binary_cells));
         },
     );
-    SavedRowset::walked(rows, index.record_count, index.problem.or(problem))
+    let mut rowset = SavedRowset::walked(rows, index.record_count, index.problem.or(problem));
+    rowset.binary_cells = binary_cells;
+    rowset
 }
 
 /// Complete the rows of a packed record that also has memo columns: its inline cells came out of
@@ -251,16 +257,13 @@ fn join_packed_memo_rows(
     memo_raw: &[u8],
     shape: &BatchShape,
     index: PackedIndex,
+    field_types: &[FieldValueType],
 ) -> SavedRowset {
     let schema = &catalog.fields;
-    // Crystal 8's memo values are one byte per character, like the rest of its text.
-    let memo_value = if index.single_byte {
-        memo_value_single_byte
-    } else {
-        memo_value
-    };
+    let single_byte = index.single_byte;
     let mut rows = index.rows;
     let mut reached = 0usize;
+    let mut binary_cells = Vec::new();
     let problem = walk_memo_descriptors(
         catalog,
         srs_raw,
@@ -275,14 +278,28 @@ fn join_packed_memo_rows(
             let mut memo_i = 0usize;
             for (k, f) in schema.iter().enumerate() {
                 if f.is_memo {
-                    row[k] = memo_value(cells.get(memo_i).copied(), heap);
+                    let cell = cells.get(memo_i).copied();
+                    // Crystal 8's memo values are one byte per character, like the rest of its text.
+                    row[k] = if single_byte {
+                        memo_value_single_byte(cell, heap)
+                    } else {
+                        memo_value(
+                            cell,
+                            heap,
+                            field_types.get(k).copied(),
+                            (global, k),
+                            &mut binary_cells,
+                        )
+                    };
                     memo_i += 1;
                 }
             }
         },
     );
     rows.truncate(reached);
-    SavedRowset::walked(rows, index.record_count, index.problem.or(problem))
+    let mut rowset = SavedRowset::walked(rows, index.record_count, index.problem.or(problem));
+    rowset.binary_cells = binary_cells;
+    rowset
 }
 
 /// Walk the memo-descriptor batches — the run that follows the record index in
@@ -551,6 +568,30 @@ mod tests {
             vec![
                 vec![Some("10".to_string()), Some("Ann".to_string())],
                 vec![Some("20".to_string()), Some("Bob".to_string())],
+            ]
+        );
+        // The fixed-index path must also respect the declared binary type, including the NUL
+        // bytes that a text memo trims away. The same descriptors can describe either encoding.
+        let binary = decode_saved_rows(
+            &catalog,
+            &srs,
+            &memo,
+            &[FieldValueType::Int32s, FieldValueType::Blob],
+        );
+        assert!(binary.rows.iter().all(|r| r[1].is_none()));
+        assert_eq!(
+            binary.binary_cells,
+            vec![
+                SavedBinaryCell {
+                    row: 0,
+                    column: 1,
+                    data: heap[4..12].to_vec()
+                },
+                SavedBinaryCell {
+                    row: 1,
+                    column: 1,
+                    data: heap[bob_off as usize + 4..].to_vec()
+                },
             ]
         );
     }

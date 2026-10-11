@@ -22,6 +22,55 @@ fn corpus() -> Vec<PathBuf> {
 }
 
 #[test]
+fn packed_saved_images_are_complete_png_bytes_not_utf16_text() {
+    let rpt = Rpt::open(rpt_test_support::fixture(
+        "tests/meridian/reports/sales/02_product_catalog.rpt",
+    ))
+    .expect("open product catalog");
+    let saved = rpt.report().saved_data.as_ref().expect("saved rows");
+    let image_column = saved
+        .columns
+        .iter()
+        .position(|c| c.name == "product.image")
+        .expect("image column");
+    assert_eq!(
+        saved.columns[image_column].value_type,
+        rpt_reader::model::FieldValueType::Blob
+    );
+    assert_eq!(saved.rows.len(), 800);
+    // The other 304 product images are null. Binary cells must retain their sparse row positions.
+    assert_eq!(saved.binary_cells.len(), 496);
+    assert_eq!(
+        saved
+            .binary_cells
+            .iter()
+            .map(|c| c.row)
+            .collect::<std::collections::HashSet<_>>()
+            .len(),
+        496
+    );
+    assert!(saved.rows.iter().all(|r| r[image_column].is_none()));
+    for image in &saved.binary_cells {
+        let row = image.row;
+        assert!(row < saved.rows.len());
+        assert_eq!(image.column, image_column);
+        assert!(
+            saved.rows[row][image_column].is_none(),
+            "blob must not appear as text"
+        );
+        assert!(image.data.starts_with(b"\x89PNG\r\n\x1a\n"));
+        assert!(
+            image.data.ends_with(b"\0\0\0\0IEND\xaeB`\x82"),
+            "PNG was truncated in row {row}"
+        );
+        assert!(
+            saved.rows[row][0].as_ref().is_some_and(|s| !s.is_empty()),
+            "text still decodes"
+        );
+    }
+}
+
+#[test]
 fn every_fixture_decodes_all_of_its_saved_rows() {
     let files = corpus();
     let mut with_saved = 0usize;

@@ -1,6 +1,6 @@
 //! The saved-data rows as part of the semantic model.
 //!
-//! [`crate::codec::saved`] decodes bytes to strings and asks to be told each column's value type;
+//! [`crate::codec::saved`] decodes text and binary cells using each column's value type;
 //! this is where that type comes from. Resolving it means reading the report's own database field
 //! catalog, so it is a model question, not a byte question, and it belongs above the codec layer.
 
@@ -50,7 +50,8 @@ pub(crate) fn decode_saved_data(
     else {
         return nothing(catalog.status_without_row_stream());
     };
-    // Each stored column's value type: a memo column is a `PersistentMemo`; every other column takes
+    // Each stored column's value type: a text memo is `PersistentMemo`, a blob keeps `Blob`;
+    // every other column takes
     // its declared type from the report's database field of the same qualified name (the inline
     // packed reader keys the on-disk field width on this — a `Number` is an 8-byte double, an
     // `Int32s` is 4 bytes, a `String` is a NUL-terminated UTF-16 run). Unmatched fields fall back to
@@ -75,12 +76,13 @@ pub(crate) fn decode_saved_data(
             record_count: rowset.record_count,
             columns,
             rows: rowset.rows,
+            binary_cells: rowset.binary_cells,
         }),
         rowset.status,
     )
 }
 
-/// Resolve each saved column's value type (schema order): a memo column is a `PersistentMemo`; every
+/// Resolve each saved column's value type (schema order): a text memo is `PersistentMemo`; every
 /// other column takes the declared type of the report database field with the same qualified name
 /// (`Table.Field`, matched on both the table's stored name and its alias) or, in a report with no
 /// tables, of the one database field definition with its name, defaulting to `Int32s`.
@@ -121,13 +123,15 @@ fn saved_field_types(schema: &[SavedFieldDesc], report: &Report) -> Vec<FieldVal
     schema
         .iter()
         .map(|f| {
+            let declared = by_name.get(&f.name).copied();
             if f.is_memo {
-                FieldValueType::PersistentMemo
+                // Memo describes the storage location, not the value's encoding: a PNG and a
+                // UTF-16 string use the same descriptor layout but require different decoders.
+                declared
+                    .filter(|t| t.is_binary())
+                    .unwrap_or(FieldValueType::PersistentMemo)
             } else {
-                by_name
-                    .get(&f.name)
-                    .copied()
-                    .unwrap_or(FieldValueType::Int32s)
+                declared.unwrap_or(FieldValueType::Int32s)
             }
         })
         .collect()

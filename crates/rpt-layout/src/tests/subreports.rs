@@ -532,6 +532,7 @@ fn flowed_subreport_shared_total_runs_once() {
     sub.data_definition.field_definitions = vec![acc_def];
     // 20 rows of 5 → single-pass Shared total is 100.
     sub.saved_data = Some(SavedData {
+        binary_cells: Vec::new(),
         record_count: 20,
         columns: vec![SavedColumn {
             name: "s.v".into(),

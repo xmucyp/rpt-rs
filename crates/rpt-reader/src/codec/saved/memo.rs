@@ -1,5 +1,5 @@
 //! The memo (variable-length / blob) values: each row's memo cells point into the per-batch heaps
-//! decoded from `MemoValuesStream`, whose entries are `(u32 len)(utf16z)`.
+//! decoded from `MemoValuesStream`, whose entries are `(u32 len)(payload)`.
 
 use super::decrypt::{batch_iv, open_batch, OpenedBatch};
 use super::schema::MEMO_CELL_SIZE;
@@ -8,12 +8,12 @@ use super::schema::MEMO_CELL_SIZE;
 /// gate reads the first block's keystream.
 const CIPHER_BLOCK_LEN: usize = 16;
 
-/// The length prefix each heap entry opens with, ahead of its UTF-16LE value.
+/// The length prefix each heap entry opens with, ahead of its text or binary payload.
 const ENTRY_PREFIX_LEN: usize = 4;
 
 /// Decode the per-batch memo heaps from `MemoValuesStream`: each batch is `zlib`-then-CFB with the
 /// shared memo IV `(memo_cols, memo_cols*12, 12, 0)`, laid back-to-back. Returns each batch's inflated
-/// heap bytes (the raw `(u32 len)(utf16z)` entry region, indexed by the descriptor-cell offsets). The
+/// heap bytes (the raw `(u32 len)(payload)` entry region, indexed by the descriptor-cell offsets). The
 /// k-th heap aligns 1:1 with the k-th descriptor batch (both split by the same memo batch size).
 pub(crate) fn decode_memo_heaps(memo_raw: &[u8], memo_cols: u32) -> Vec<Vec<u8>> {
     let iv = batch_iv(
@@ -44,10 +44,7 @@ pub(crate) fn decode_memo_heaps(memo_raw: &[u8], memo_cols: u32) -> Vec<Vec<u8>>
 /// the trailing NUL. Returns `None` for an empty value (length 0) or an out-of-bounds slice — an empty
 /// persistent-memo is modelled as `None`.
 pub(crate) fn read_memo_cell(heap: &[u8], offset: usize, length: usize) -> Option<String> {
-    if length == 0 || offset + ENTRY_PREFIX_LEN + length > heap.len() {
-        return None;
-    }
-    let data = &heap[offset + ENTRY_PREFIX_LEN..offset + ENTRY_PREFIX_LEN + length];
+    let data = read_memo_bytes(heap, offset, length)?;
     let s: String = char::decode_utf16(
         data.chunks_exact(2)
             .map(|c| u16::from_le_bytes([c[0], c[1]]))
@@ -58,10 +55,35 @@ pub(crate) fn read_memo_cell(heap: &[u8], offset: usize, length: usize) -> Optio
     (!s.is_empty()).then_some(s)
 }
 
+/// Read a descriptor's byte payload without interpreting it. Blob data may contain zero bytes or
+/// an odd number of bytes, so applying the text decoder would both garble and truncate it.
+pub(super) fn read_memo_bytes(heap: &[u8], offset: usize, length: usize) -> Option<&[u8]> {
+    if length == 0 {
+        return None;
+    }
+    let start = offset.checked_add(ENTRY_PREFIX_LEN)?;
+    heap.get(start..start.checked_add(length)?)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::codec::crypto::cfb_encrypt;
+
+    #[test]
+    fn binary_memo_keeps_zero_bytes_and_odd_lengths() {
+        let payload = [0x89, 0x50, 0, 0, 0xff];
+        let mut heap = (payload.len() as u32).to_le_bytes().to_vec();
+        heap.extend_from_slice(&payload);
+        assert_eq!(
+            read_memo_bytes(&heap, 0, payload.len()),
+            Some(payload.as_slice())
+        );
+        assert_eq!(read_memo_bytes(&heap, 0, payload.len() + 1), None);
+        assert_eq!(read_memo_bytes(&heap, usize::MAX, 1), None);
+        assert_eq!(read_memo_bytes(&heap, 0, usize::MAX), None);
+        assert_eq!(read_memo_bytes(&heap, 0, 0), None);
+    }
 
     #[test]
     fn decode_memo_heaps_walks_all_batches_and_cells_resolve() {

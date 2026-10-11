@@ -68,7 +68,8 @@ pub use report_def::{
     SectionFormat,
 };
 pub use saved::{
-    SavedBatchInfo, SavedBatchInspection, SavedBatchKind, SavedColumn, SavedData, SavedFieldInfo,
+    SavedBatchInfo, SavedBatchInspection, SavedBatchKind, SavedBinaryCell, SavedColumn, SavedData,
+    SavedFieldInfo,
 };
 
 /// The root of a decoded report (SDK: `IReportDocument`).

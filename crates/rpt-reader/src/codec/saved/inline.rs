@@ -5,9 +5,9 @@
 //! exactly as on the packed path — the record layout only supplies the slot a variable-length
 //! column fills.
 
-use crate::model::FieldValueType;
+use crate::model::{FieldValueType, SavedBinaryCell};
 
-use super::memo::read_memo_cell;
+use super::memo::{read_memo_bytes, read_memo_cell};
 use super::packed::{
     decode_single_byte_z, decode_utf16z, float_cell_to_string, int_cell_to_string,
     record_slot_layout,
@@ -45,7 +45,14 @@ impl<'a> RowReader<'a> {
     /// One row: its inline fields out of the fixed index record `idx_rec`, its memo fields out of
     /// `heap` via `cells` — the row's descriptor cells in memo-column order, each
     /// `[u16 col][u16 flag][u32 heap_offset][u32 byte_length]`.
-    pub(super) fn row(&self, idx_rec: &[u8], cells: &[&[u8]], heap: &[u8]) -> Vec<Option<String>> {
+    pub(super) fn row(
+        &self,
+        idx_rec: &[u8],
+        cells: &[&[u8]],
+        heap: &[u8],
+        row: usize,
+        binary_cells: &mut Vec<SavedBinaryCell>,
+    ) -> Vec<Option<String>> {
         let mut memo_i = 0usize;
         self.schema
             .iter()
@@ -54,7 +61,13 @@ impl<'a> RowReader<'a> {
                 if f.is_memo {
                     let cell = cells.get(memo_i).copied();
                     memo_i += 1;
-                    memo_value(cell, heap)
+                    memo_value(
+                        cell,
+                        heap,
+                        self.field_types.get(k).copied(),
+                        (row, k),
+                        binary_cells,
+                    )
                 } else {
                     inline_cell(
                         idx_rec,
@@ -70,11 +83,30 @@ impl<'a> RowReader<'a> {
 
 /// The memo value a descriptor cell `[u16 col][u16 flag][u32 heap_offset][u32 byte_length]` points
 /// at in `heap`; `None` for a missing cell or an empty value.
-pub(super) fn memo_value(cell: Option<&[u8]>, heap: &[u8]) -> Option<String> {
+pub(super) fn memo_value(
+    cell: Option<&[u8]>,
+    heap: &[u8],
+    value_type: Option<FieldValueType>,
+    (row, column): (usize, usize),
+    binary_cells: &mut Vec<SavedBinaryCell>,
+) -> Option<String> {
     cell.and_then(|c| {
-        let o = u32::from_le_bytes([c[4], c[5], c[6], c[7]]) as usize;
-        let l = u32::from_le_bytes([c[8], c[9], c[10], c[11]]) as usize;
-        read_memo_cell(heap, o, l)
+        let o = u32::from_le_bytes(c.get(4..8)?.try_into().ok()?) as usize;
+        let l = u32::from_le_bytes(c.get(8..12)?.try_into().ok()?) as usize;
+        if value_type.is_some_and(FieldValueType::is_binary) {
+            // Binary cells share memo storage with text; preserve their descriptor's exact byte
+            // length, rather than stopping at the first NUL as a UTF-16 string would.
+            if let Some(data) = read_memo_bytes(heap, o, l) {
+                binary_cells.push(SavedBinaryCell {
+                    row,
+                    column,
+                    data: data.to_vec(),
+                });
+            }
+            None
+        } else {
+            read_memo_cell(heap, o, l)
+        }
     })
 }
 

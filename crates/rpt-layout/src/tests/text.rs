@@ -307,6 +307,7 @@ fn multi_column_flows_records_across_columns() {
         vec![section(AreaSectionKind::Detail, "Details", 300, vec![obj])],
     )];
     let saved = SavedData {
+        binary_cells: Vec::new(),
         record_count: 6,
         columns: vec![SavedColumn {
             name: "t.x".into(),
@@ -363,6 +364,7 @@ fn multi_column_down_then_across_fills_columns_vertically() {
         vec![section(AreaSectionKind::Detail, "Details", 300, vec![obj])],
     )];
     let saved = SavedData {
+        binary_cells: Vec::new(),
         record_count: 4,
         columns: vec![SavedColumn {
             name: "t.x".into(),
