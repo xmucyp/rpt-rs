@@ -29,7 +29,7 @@ q
 BT
 0 Tr
 /f0 8.951 Tf
-1 0 0 -1 157.2 77.8 Tm
+1 0 0 -1 175.2 77.8 Tm
 [ (Last modified:  10/26/2012) ] TJ
 ET
 Q
@@ -76,7 +76,7 @@ q
 BT
 0 Tr
 /f0 12.531 Tf
-1 0 0 -1 306.2 133.9 Tm
+1 0 0 -1 288.2 133.9 Tm
 [ (T) 74.219 (otal for Psycho-Cycle:) ] TJ
 ET
 Q
@@ -106,7 +106,7 @@ q
 BT
 0 Tr
 /f0 12.531 Tf
-1 0 0 -1 270.2 160.2 Tm
+1 0 0 -1 252.2 160.2 Tm
 [ (T) 74.219 (otal for Crank Components:) ] TJ
 ET
 Q
@@ -136,7 +136,7 @@ q
 BT
 0 Tr
 /f0 12.531 Tf
-1 0 0 -1 270.2 186.5 Tm
+1 0 0 -1 252.2 186.5 Tm
 [ (T) 74.219 (otal for Hooked on Helmets:) ] TJ
 ET
 Q
@@ -166,7 +166,7 @@ q
 BT
 0 Tr
 /f0 12.531 Tf
-1 0 0 -1 252.2 212.8 Tm
+1 0 0 -1 234.2 212.8 Tm
 [ (T) 74.219 (otal for The Great Bike Shop:) ] TJ
 ET
 Q
@@ -196,7 +196,7 @@ q
 BT
 0 Tr
 /f0 12.531 Tf
-1 0 0 -1 288.2 239.1 Tm
+1 0 0 -1 270.2 239.1 Tm
 [ (T) 74.219 (otal for Blazing Saddles:) ] TJ
 ET
 Q

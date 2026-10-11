@@ -41,17 +41,28 @@ pub(crate) fn expand_tabs(run: TextRun, layout: &dyn TextLayout) -> Vec<TextRun>
     if !run.text.contains('\t') {
         return vec![run];
     }
-    // Walk the pen across the segments, jumping to the next stop at each tab. `pen` ends as the
-    // run's full advance, tabs included.
+    // Walk the pen across the segments, jumping to the next stop at each tab; `end` is the run's
+    // full advance, tabs included, which the alignment anchors on.
+    //
+    // Which stop a tab reaches is decided on the text's width at the font's stored size, not at the
+    // smaller em it is drawn at (see `rpt_pages::gdi_cell_em_ratio`): Crystal right-aligns
+    // "Total for Psycho-Cycle:\t" in 14pt Arial Bold (drawn 2798 twips wide, 3127 at the stored
+    // size) to the 3240 stop, not the 2880 one — on every line of Top5USAsubCanada's group footers.
+    // The text after the last tab still counts at its drawn width, as untabbed text aligns.
+    let stored = 1.0 / f64::from(rpt_pages::gdi_cell_em_ratio(&run.font.family));
     let mut pen = 0.0;
+    let mut end = 0.0;
     let mut placed: Vec<(f64, String)> = Vec::new();
     for (i, seg) in run.text.split('\t').enumerate() {
         if i > 0 {
             pen = next_stop(pen);
         }
         placed.push((pen, seg.to_string()));
-        pen += crate::text::spaced_width_twips(layout, seg, &run.font, run.character_spacing);
+        let width = crate::text::spaced_width_twips(layout, seg, &run.font, run.character_spacing);
+        end = pen + width;
+        pen += width * stored;
     }
+    let pen = end;
     let box_w = f64::from(run.bounds.width.0);
     let anchor = match run.align {
         TextAlign::Center => (box_w - pen) / 2.0,
@@ -196,5 +207,30 @@ mod tests {
         let out = expand_tabs(r, &ApproxLayout);
         assert_eq!(out[1].bounds.left, out[0].bounds.left);
         assert_eq!(out[0].bounds.top.0 - out[1].bounds.top.0, TAB_STOP);
+    }
+
+    #[test]
+    fn a_tab_reaches_its_stop_by_the_texts_width_at_the_stored_size() {
+        // Text that ends short of the first stop as drawn, but past it at the font's stored size
+        // (the drawn em is that size times the family's cell ratio), right-aligned with a trailing
+        // tab: Crystal advances the tab to the second stop, so the line ends 720 twips from its left.
+        let font = FontSpec {
+            family: "Arial".into(),
+            size_pt: 10.0 * rpt_pages::gdi_cell_em_ratio("Arial"),
+            ..FontSpec::default()
+        };
+        let ratio = f64::from(rpt_pages::gdi_cell_em_ratio("Arial"));
+        let text = (1..40)
+            .map(|n| "x".repeat(n))
+            .find(|t| {
+                let w = ApproxLayout.width_twips(t, &font);
+                w < 360.0 && w / ratio > 360.0
+            })
+            .expect("a width between the two");
+        let mut r = run(&format!("{text}\t"));
+        r.font = font;
+        r.align = TextAlign::Right;
+        let out = expand_tabs(r, &ApproxLayout);
+        assert_eq!(out[0].bounds.left.0, 1000 + 8000 - 720);
     }
 }
