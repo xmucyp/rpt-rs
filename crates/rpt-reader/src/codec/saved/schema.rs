@@ -6,6 +6,8 @@
 //! and the stored fields in record-layout order. Everything below is a derivation over that, and
 //! everything else in this module turns it into bytes.
 
+use crate::coverage::SavedDataStatus;
+
 /// Batch size (row capacity) of the record-index batch (`SavedRecordsStream`) — a fixed 1000-row cap.
 pub(crate) const INDEX_BATCH_SIZE: u32 = 1000;
 
@@ -123,6 +125,18 @@ impl SavedCatalog {
         let total: u32 = self.index_directory().iter().map(|b| b.count).sum();
         (total > 0).then_some(total)
     }
+
+    /// What the saved data amounts to when the `SavedRecordsStream` is absent. A report saved
+    /// without its data keeps the catalog of the fields it would store but lists no batch, or only
+    /// empty ones, so nothing is missing. Only a directory listing items makes the absent stream a
+    /// loss.
+    pub(crate) fn status_without_row_stream(&self) -> SavedDataStatus {
+        if self.batches.iter().any(|b| b.desc.count > 0) {
+            SavedDataStatus::MissingRowStream
+        } else {
+            SavedDataStatus::NoRecordBatches
+        }
+    }
 }
 
 /// The widths a batch directory is read with: which class each entry belongs to, and which record
@@ -205,4 +219,49 @@ pub(crate) fn srs_directory(directory: &[BatchDesc]) -> Vec<BatchDesc> {
             chains
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn catalog(counts: &[u32]) -> SavedCatalog {
+        SavedCatalog {
+            item_size: Some(960),
+            batches: counts
+                .iter()
+                .map(|&count| SavedBatch {
+                    desc: BatchDesc {
+                        count,
+                        item_size: 960,
+                        stream_off: 0,
+                        stream_len: 64,
+                    },
+                    ..SavedBatch::default()
+                })
+                .collect(),
+            fields: vec![SavedFieldDesc {
+                rec_offset: 0,
+                name: "Books.Title".into(),
+                is_memo: false,
+            }],
+        }
+    }
+
+    /// A report saved without data names its fields but lists no batch: no row stream is complete.
+    #[test]
+    fn no_row_stream_is_complete_when_the_directory_lists_no_items() {
+        for counts in [&[][..], &[0]] {
+            let status = catalog(counts).status_without_row_stream();
+            assert_eq!(status, SavedDataStatus::NoRecordBatches, "{counts:?}");
+            assert!(status.is_complete());
+        }
+    }
+
+    #[test]
+    fn no_row_stream_is_a_loss_when_the_directory_lists_rows() {
+        let status = catalog(&[3]).status_without_row_stream();
+        assert_eq!(status, SavedDataStatus::MissingRowStream);
+        assert!(!status.is_complete());
+    }
 }

@@ -48,7 +48,7 @@ pub(crate) fn decode_saved_data(
     let Some(srs_raw) =
         find(|id| matches!(id, StreamId::SavedRecordsStream(_))).map(|s| s.encode())
     else {
-        return nothing(SavedDataStatus::MissingRowStream);
+        return nothing(catalog.status_without_row_stream());
     };
     // Each stored column's value type: a memo column is a `PersistentMemo`; every other column takes
     // its declared type from the report's database field of the same qualified name (the inline

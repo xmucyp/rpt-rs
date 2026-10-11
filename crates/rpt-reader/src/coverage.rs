@@ -193,8 +193,9 @@ pub enum SavedDataStatus {
     /// A catalog is present but names no stored field, so no row has a shape to decode into. A
     /// template saved with the data flag set and nothing behind it reports this.
     NoStoredFields,
-    /// The catalog names stored fields but the `SavedRecordsStream` holding their rows is absent, so
-    /// the file describes a rowset it does not carry.
+    /// The catalog's batch directory lists rows but the `SavedRecordsStream` holding them is absent,
+    /// so the file describes a rowset it does not carry. (A report saved without its data names its
+    /// fields too, but lists no batch: that is [`NoRecordBatches`](Self::NoRecordBatches).)
     MissingRowStream,
     /// The batch directory lists no record-index batch, so there is no row index to read.
     NoRecordBatches,
@@ -267,8 +268,7 @@ impl fmt::Display for SavedDataStatus {
                 f.write_str("a saved-data catalog naming no stored field")
             }
             SavedDataStatus::MissingRowStream => f.write_str(
-                "the saved-data catalog names stored fields but the stream holding their rows is \
-                 absent",
+                "the saved-data catalog lists stored rows but the stream holding them is absent",
             ),
             SavedDataStatus::NoRecordBatches => {
                 f.write_str("a saved-data catalog listing no record batch")
