@@ -985,3 +985,40 @@ fn a_single_color_family_legends_its_series_by_name() {
         );
     }
 }
+
+#[test]
+fn a_grouped_multi_value_chart_aggregates_each_value_by_its_own_summary() {
+    use crate::aggregate::chart_series_multi;
+    use crate::Locale;
+    use rpt_model::{ChartObject, Group};
+    // A stacked bar of subtotal and tax per region in a report grouped by region, with no group
+    // summaries and no axis title naming an operation (the parking `orders_bar_stacked` report).
+    // Each value's own summary form (`Sum ({t.sub}, …)`) names its operation; without it every bar
+    // fell back to a group summary that does not exist and plotted zero.
+    let saved = saved_data(
+        &[
+            ("t.region", FieldValueType::String),
+            ("t.sub", FieldValueType::Number),
+            ("t.tax", FieldValueType::Number),
+        ],
+        &[&["A", "10", "1"], &["A", "20", "2"], &["B", "100", "15"]],
+    );
+    let mut dd = rpt_model::DataDefinition::default();
+    let mut g = Group::default();
+    g.condition_field = "t.region".into();
+    dd.groups = vec![g];
+    let ds = build_dataset(&SavedDataSource::new(&saved), &dd);
+    assert!(!ds.groups.is_empty(), "the report is grouped");
+
+    let mut cdef = ChartObject::default();
+    cdef.data_refs = vec!["t.sub".into(), "t.tax".into()];
+    cdef.category_refs = vec!["t.region".into()];
+    cdef.definition.data_refs = vec![
+        "Sum ({t.sub}, {t.region})".into(),
+        "Maximum ({t.tax}, {t.region})".into(),
+    ];
+    let (categories, series) = chart_series_multi(&ds, &Locale::default(), &cdef);
+    assert_eq!(categories, vec!["A".to_string(), "B".to_string()]);
+    assert_eq!(series[0], ("t.sub".to_string(), vec![30.0, 100.0]));
+    assert_eq!(series[1], ("t.tax".to_string(), vec![2.0, 15.0]));
+}

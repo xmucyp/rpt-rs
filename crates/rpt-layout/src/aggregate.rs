@@ -232,7 +232,8 @@ pub(crate) fn chart_series(
     // The chart's aggregation operation is not surfaced as a declared summary field; it is named
     // in the data-axis title ("Sum of id" / "Count of …") or the data-value label.
     let op = chart_summary_op(&chart.definition.data_axis_title)
-        .or_else(|| chart_summary_op(&chart.definition.data_label));
+        .or_else(|| chart_summary_op(&chart.definition.data_label))
+        .or_else(|| chart_value_op(chart, 0));
     // Fast path: the chart's category mirrors a report group section, so read one entry per group
     // instance. Kept byte-identical for already-grouped reports.
     let series: Vec<(String, f64)> = dataset
@@ -280,16 +281,23 @@ pub(crate) fn chart_series_multi(
             .iter()
             .map(|g| group_category_label(g, locale))
             .collect();
+        // Each value is aggregated by its own operation over each group's rows (a declared group
+        // summary of the field wins, see `chart_group_value`). With none named anywhere it is a
+        // Sum, as the ungrouped path below: falling back to the group's first summary would plot
+        // one unrelated value for every series, or nothing when the group declares none.
         let series: Vec<(String, Vec<f64>)> = chart
             .data_refs
             .iter()
-            .map(|r| {
+            .enumerate()
+            .map(|(i, r)| {
                 let field = inner_field(r);
-                let op = chart_summary_op(r).or(chart_op);
+                let op = chart_value_op(chart, i)
+                    .or(chart_op)
+                    .unwrap_or(SummaryOperation::Sum);
                 let vals = dataset
                     .groups
                     .iter()
-                    .map(|g| chart_group_value(g, Some(&field), op).unwrap_or(0.0))
+                    .map(|g| chart_group_value(g, Some(&field), Some(op)).unwrap_or(0.0))
                     .collect();
                 (field, vals)
             })
@@ -306,9 +314,10 @@ pub(crate) fn chart_series_multi(
     let series: Vec<(String, Vec<f64>)> = chart
         .data_refs
         .iter()
-        .map(|r| {
+        .enumerate()
+        .map(|(i, r)| {
             let field = inner_field(r);
-            let op = chart_summary_op(r)
+            let op = chart_value_op(chart, i)
                 .or(chart_op)
                 .unwrap_or(SummaryOperation::Sum);
             let vals = buckets
@@ -856,6 +865,46 @@ fn value_to_days(v: &Value) -> Option<f64> {
         Value::DateTime(d, t) => Some(d.to_days() as f64 + t.to_seconds() as f64 / 86_400.0),
         _ => None,
     }
+}
+
+/// The operation of a chart value in its summary form, as the chart definition stores it:
+/// `Sum ({orders.subtotal}, {orders.created_at}, "daily")`. `None` for any other shape.
+pub(crate) fn summary_form_op(binding: &str) -> Option<SummaryOperation> {
+    use SummaryOperation as S;
+    let (op, _) = binding.trim().split_once('(')?;
+    let op = op.trim();
+    [
+        S::Sum,
+        S::Average,
+        S::SampleVariance,
+        S::SampleStandardDeviation,
+        S::Maximum,
+        S::Minimum,
+        S::Count,
+        S::PopVariance,
+        S::PopStandardDeviation,
+        S::DistinctCount,
+        S::Median,
+        S::Mode,
+    ]
+    .into_iter()
+    .find(|s| s.full_name() == op)
+}
+
+/// The operation of a chart's `i`-th value: named on the value itself ("Sum of id"), else by its
+/// summary form in the chart definition (see [`summary_form_op`]).
+fn chart_value_op(chart: &m::ChartObject, i: usize) -> Option<SummaryOperation> {
+    chart
+        .data_refs
+        .get(i)
+        .and_then(|r| chart_summary_op(r))
+        .or_else(|| {
+            chart
+                .definition
+                .data_refs
+                .get(i)
+                .and_then(|r| summary_form_op(r))
+        })
 }
 
 /// Parse a chart value binding's leading operation ("Sum of id", "Count of {t.f}", "Distinct Count
