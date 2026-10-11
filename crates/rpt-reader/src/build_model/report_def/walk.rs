@@ -116,6 +116,7 @@ impl<'a> RdWalk<'a> {
             // Object openers, each starting the run of attribute records that follows it.
             RdRecord::OpenText => self.open(ReportObjectKind::Text(TextObject::default())),
             RdRecord::OpenField => self.open_field(node),
+            RdRecord::HighlightCondition => self.push_highlight(node),
             RdRecord::OpenShape => self.open_shape(node),
             RdRecord::BlobFieldRef => self.stash_blob_field_ref(node),
             RdRecord::OpenPicture => self.open_picture(),
@@ -227,6 +228,32 @@ impl<'a> RdWalk<'a> {
         let group_no = self.areas.last().and_then(|a| a.group_level).map(|l| l + 1);
         let field = field_object(&row, self.groups, &self.sum_defs, group_no);
         self.open(ReportObjectKind::Field(Box::new(field)));
+    }
+
+    /// `0xbf` — one Highlighting Expert rule, appended to the current field object's in file order.
+    fn push_highlight(&mut self, node: &RecordNode) {
+        let row = self.row(&ft::HIGHLIGHT_CONDITION, node);
+        let color = |part: &str| {
+            (row.u(&format!("{part}_flag")) == 0).then(|| crate::model::Color {
+                a: 255,
+                r: row.u(&format!("{part}_r")) as u8,
+                g: row.u(&format!("{part}_g")) as u8,
+                b: row.u(&format!("{part}_b")) as u8,
+            })
+        };
+        let rule = crate::model::HighlightRule {
+            operator: crate::model::HighlightOperator::from_code(row.u("operator") as u8),
+            threshold: row.text("threshold").to_owned(),
+            font_color: color("font_color"),
+            background_color: color("background_color"),
+        };
+        if let Some(ReportObject {
+            kind: ReportObjectKind::Field(f),
+            ..
+        }) = self.object()
+        {
+            f.highlights.push(rule);
+        }
     }
 
     /// `0xa9` — open a drawing object.

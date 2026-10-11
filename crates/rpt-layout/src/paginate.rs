@@ -148,6 +148,8 @@ impl<'a> Formatter<'a> {
         // Set by the `Field` arm below when the field prints one currency symbol per page; the plan
         // carries it so the emit path can record a fixup without resolving the value again.
         let mut currency = None;
+        // Set by the `Field` arm when a Highlighting Expert rule matches the field's value.
+        let mut highlight = (None, None);
         // `reading_order` (Text/FieldHeading only) sets the paragraph's base direction; `paragraphs`
         // carries per-paragraph indentation for a text object (fields/headings have none).
         let (raw, font, color, kind, reading_order, paragraphs): (
@@ -160,7 +162,7 @@ impl<'a> Formatter<'a> {
         ) = match &obj.kind {
             ReportObjectKind::Field(f) => (
                 {
-                    let (text, mark) = field_text_marked(
+                    let (text, mark, value) = field_text_marked(
                         self.report,
                         f,
                         ctx,
@@ -169,11 +171,15 @@ impl<'a> Formatter<'a> {
                         &self.diagnostics,
                     );
                     currency = mark;
+                    highlight = crate::resolve::highlight_colors(f, &value);
                     text
                 },
                 font_of(&f.font_color.font),
-                cond_color(&f.font_color.condition_formulas, cond::FONT_COLOR, ctx)
-                    .unwrap_or(f.font_color.color),
+                // A matching highlight rule supersedes the object's own color, conditional or not.
+                highlight.0.unwrap_or_else(|| {
+                    cond_color(&f.font_color.condition_formulas, cond::FONT_COLOR, ctx)
+                        .unwrap_or(f.font_color.color)
+                }),
                 ObjectKind::Field,
                 ReadingOrder::LeftToRight,
                 None,
@@ -329,6 +335,7 @@ impl<'a> Formatter<'a> {
             color,
             kind,
             currency,
+            background: highlight.1,
         })
     }
 

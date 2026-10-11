@@ -84,6 +84,8 @@ numbers! {
     FIELD_HEADING_LINK,
     /// Opens a field object (its data-source reference).
     FIELD_OBJECT,
+    /// One Highlighting Expert rule of the field object it follows.
+    HIGHLIGHT_CONDITION,
     /// Opens a line/box drawing object (geometry distinguishes them).
     DRAWING_OBJECT,
     /// Opens a picture/OLE object.

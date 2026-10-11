@@ -288,8 +288,10 @@ impl Formatter<'_> {
         let rect = self.page_rect(&obj.bounds, at.origin_y);
         // Background fill goes *behind* the text; the border stroke on top. Drawing them in one
         // rect after the text would paint the fill over the glyphs (a black header bar with
-        // white text would render as a solid black bar).
-        self.push_object_fill(obj, rect, at.section_name, at.instance);
+        // white text would render as a solid black bar). A matching highlight rule's background
+        // replaces the object's own.
+        let background = plan.and_then(|p| p.background);
+        self.push_fill(obj, background, rect, at.section_name, at.instance);
         if let Some(plan) = plan {
             // Text rotation (0 / 90 / 270°, CCW) is applied by the backends as a transform about
             // the run's top-left; the layout metrics and box are unaffected.
@@ -1204,7 +1206,19 @@ impl Formatter<'_> {
         section_name: &str,
         instance: u32,
     ) {
-        let Some(fill) = obj.border.background_color else {
+        self.push_fill(obj, None, rect, section_name, instance);
+    }
+
+    /// [`Self::push_object_fill`], painting `over` instead of the object's own background when set.
+    fn push_fill(
+        &mut self,
+        obj: &ReportObject,
+        over: Option<Color>,
+        rect: Rect,
+        section_name: &str,
+        instance: u32,
+    ) {
+        let Some(fill) = over.or(obj.border.background_color) else {
             return;
         };
         self.push_op(DrawOp::Rect(RectOp {

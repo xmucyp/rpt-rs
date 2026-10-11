@@ -2161,6 +2161,19 @@
                           "time_base": "TwelveHour"
                         }
                       },
+                      "highlights": [
+                        {
+                          "background_color": null,
+                          "font_color": {
+                            "a": 255,
+                            "b": 0,
+                            "g": 128,
+                            "r": 0
+                          },
+                          "operator": "GreaterThan",
+                          "threshold": "100000.00"
+                        }
+                      ],
                       "ref_kind": "Summary",
                       "summary_code": 1,
                       "value_type": "Currency"

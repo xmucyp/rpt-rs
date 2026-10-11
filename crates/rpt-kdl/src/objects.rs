@@ -9,9 +9,10 @@ use kdl::KdlValue;
 use rpt_model::{
     Alignment, Border, BoxShape, ChartDefinition, ChartGraphType, ChartLegendPosition, ChartObject,
     CommonFieldFormat, CrossTabDimension, CrossTabGridOptions, CrossTabObject, DrawingShape,
-    FieldHeadingObject, FieldObject, FieldRefKind, FieldValueType, Hyperlink, LineShape,
-    ObjectFormat, Paragraph, PictureObject, ReadingOrder, Rect, ReportObject, ReportObjectKind,
-    SubreportObject, TextObject, TextRotationAngle, Twips, VerticalAlignment,
+    FieldHeadingObject, FieldObject, FieldRefKind, FieldValueType, HighlightOperator,
+    HighlightRule, Hyperlink, LineShape, ObjectFormat, Paragraph, PictureObject, ReadingOrder,
+    Rect, ReportObject, ReportObjectKind, SubreportObject, TextObject, TextRotationAngle, Twips,
+    VerticalAlignment,
 };
 
 use crate::build::{color, int, twips, Node};
@@ -73,6 +74,7 @@ fn field_node(name: &str, bounds: &Rect, f: &FieldObject) -> Node {
         font_color,
         format,
         summary_code,
+        highlights,
     } = f;
     let mut n = xywh(Node::new("field").arg(name), bounds)
         .prop("src", data_source.as_str())
@@ -102,6 +104,24 @@ fn field_node(name: &str, bounds: &Rect, f: &FieldObject) -> Node {
             .children(format::field_format_nodes(fmt));
     }
     n.child_opt(format::font_node(font_color))
+        .children(highlights.iter().map(highlight_node))
+}
+
+/// One Highlighting Expert rule: `highlight "less-than" "1000.00" color=… background=…`.
+fn highlight_node(h: &HighlightRule) -> Node {
+    let op = match h.operator {
+        HighlightOperator::LessThan => "less-than".to_string(),
+        HighlightOperator::GreaterThan => "greater-than".to_string(),
+        HighlightOperator::Other(code) => format!("code-{code}"),
+    };
+    let mut n = Node::new("highlight").arg(op).arg(h.threshold.as_str());
+    if let Some(c) = h.font_color {
+        n = n.prop("color", color(c));
+    }
+    if let Some(c) = h.background_color {
+        n = n.prop("background", color(c));
+    }
+    n
 }
 
 fn text_node(name: &str, bounds: &Rect, t: &TextObject) -> Node {

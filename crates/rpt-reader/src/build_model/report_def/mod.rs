@@ -72,6 +72,8 @@ pub(super) enum RdRecord {
     FieldHeadingLink,
     /// `0x9f` — opens a field object.
     OpenField,
+    /// `0xbf` — one Highlighting Expert rule of the current field object.
+    HighlightCondition,
     /// `0xa9` — opens a drawing object (line or box, told apart by geometry).
     OpenShape,
     /// `0xae` — opens a picture/OLE object.
@@ -143,6 +145,7 @@ impl RdRecord {
             TEXT_OBJECT_CONTAINER => RdRecord::OpenText,
             FIELD_HEADING_LINK => RdRecord::FieldHeadingLink,
             FIELD_OBJECT => RdRecord::OpenField,
+            HIGHLIGHT_CONDITION => RdRecord::HighlightCondition,
             DRAWING_OBJECT => RdRecord::OpenShape,
             PICTURE_OBJECT => RdRecord::OpenPicture,
             BLOB_FIELD_WRAPPER => RdRecord::BlobFieldRef,

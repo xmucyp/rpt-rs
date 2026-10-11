@@ -87,6 +87,7 @@ pub(crate) const ALL: &[&Table] = &[
     &XML_DEFINITION,
     &SAVE_METADATA,
     &FIELD_OBJECT,
+    &HIGHLIGHT_CONDITION,
     &PICTURE_OBJECT,
     &BLOB_FIELD_WRAPPER,
     &OLE_OBJECT_ITEM,

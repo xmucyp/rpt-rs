@@ -167,6 +167,9 @@ pub(crate) struct TextPlan {
     /// pure data — a plan that is built and then discarded (a suppressed or blank band) records
     /// nothing, because the fixup is pushed by the emit path, not here.
     pub(crate) currency: Option<resolve::CurrencyMark>,
+    /// The background a matching Highlighting Expert rule paints behind the field, in place of the
+    /// object's own.
+    pub(crate) background: Option<Color>,
 }
 
 /// Lay out a whole report against its dataset, producing the paginated Page IR. Uses the

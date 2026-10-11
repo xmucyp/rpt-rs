@@ -118,6 +118,38 @@ pub(crate) const SECTION_CODE_AREA_TYPE: Table = Table {
     ],
 };
 
+/// `0x00bf HighlightCondition` — one Highlighting Expert rule of the field object it follows, after
+/// the field's format records. A field carries one per rule, in the order they are tested.
+///
+/// The comparison is a little-endian word whose low byte is the operator (`3` less than, `5` greater
+/// than; its three high bytes are zero), which reads here as the byte before a string whose
+/// big-endian length begins with those zeros. The threshold and a second value (`0.00` in every
+/// record seen, presumably a range's other end) are ASCII decimal strings. Each color is a flag byte
+/// (`0` sets the color, anything else leaves the object's own) then `B`, `G`, `R`. The layout and
+/// the operator codes come from majorsilence.crystal, checked against Crystal's renders of two
+/// reports: SalesByCustomer-Grouped prints a total under 1000.00 red on grey, USA Orders prints every
+/// total over 100000.00 in green.
+pub(crate) const HIGHLIGHT_CONDITION: Table = Table {
+    dialect: Dialect::Contents,
+    rtype: 0x00bf,
+    name: "HighlightCondition",
+    fields: &[
+        Field::new("operator", Kind::U8),
+        Field::new("threshold", Kind::Str),
+        Field::new("second_value", Kind::Str),
+        Field::new("_u0", Kind::U8),
+        Field::new("font_color_flag", Kind::U8),
+        Field::new("font_color_b", Kind::U8),
+        Field::new("font_color_g", Kind::U8),
+        Field::new("font_color_r", Kind::U8),
+        Field::new("background_color_flag", Kind::U8),
+        Field::new("background_color_b", Kind::U8),
+        Field::new("background_color_g", Kind::U8),
+        Field::new("background_color_r", Kind::U8),
+        Field::new("_u1", Kind::U8),
+    ],
+};
+
 /// `0x009f FieldObject` — the field object's opener: which field the object shows.
 ///
 /// Like every object opener its nested `ObjectName` comes **first** in the content, ahead of every

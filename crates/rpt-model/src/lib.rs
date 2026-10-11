@@ -58,8 +58,8 @@ pub use objects::{
     ChartNumberFormat, ChartObject, ChartPieSize, ChartSliceDetachment, ChartViewAngle,
     CrossTabCellFormat, CrossTabDimension, CrossTabGridFormat, CrossTabGridOptions,
     CrossTabMeasure, CrossTabObject, DrawingShape, FieldHeadingObject, FieldObject, FieldRefKind,
-    IndentAndSpacingFormat, LineShape, LineSpacing, Paragraph, PictureObject, ReportObject,
-    ReportObjectKind, SubreportObject, TextObject, TextRun,
+    HighlightOperator, HighlightRule, IndentAndSpacingFormat, LineShape, LineSpacing, Paragraph,
+    PictureObject, ReportObject, ReportObjectKind, SubreportObject, TextObject, TextRun,
 };
 pub use primitives::{Color, Conditioned, Formula, RecordRef, Rect, Twips, Version};
 pub use report_def::{area_objects, area_objects_mut};

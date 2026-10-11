@@ -2069,6 +2069,35 @@
                           "time_base": "TwelveHour"
                         }
                       },
+                      "highlights": [
+                        {
+                          "background_color": {
+                            "a": 255,
+                            "b": 192,
+                            "g": 192,
+                            "r": 192
+                          },
+                          "font_color": {
+                            "a": 255,
+                            "b": 0,
+                            "g": 0,
+                            "r": 255
+                          },
+                          "operator": "LessThan",
+                          "threshold": "1000.00"
+                        },
+                        {
+                          "background_color": null,
+                          "font_color": {
+                            "a": 255,
+                            "b": 0,
+                            "g": 128,
+                            "r": 0
+                          },
+                          "operator": "GreaterThan",
+                          "threshold": "100000.00"
+                        }
+                      ],
                       "ref_kind": "Summary",
                       "summary_code": 0,
                       "value_type": "Currency"

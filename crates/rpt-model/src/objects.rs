@@ -142,6 +142,54 @@ pub struct FieldObject {
     /// identically have distinct codes — so this is the identity used to deduplicate
     /// `<SummaryFields>`. `None` for non-summary objects.
     pub summary_code: Option<u16>,
+    /// The object's Highlighting Expert rules, in the order the file stores them, which is the
+    /// order they are tested in: the first that matches the object's value sets its colors. Empty
+    /// for almost every object, and then left out of the serialized model.
+    #[cfg_attr(
+        feature = "serde",
+        serde(default, skip_serializing_if = "Vec::is_empty")
+    )]
+    pub highlights: Vec<HighlightRule>,
+}
+
+/// One Highlighting Expert rule (`0x00bf`): compare the field's own value with a threshold and, when
+/// it matches, print in these colors instead of the object's own.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct HighlightRule {
+    /// The comparison.
+    pub operator: HighlightOperator,
+    /// The value compared against, as the file stores it (ASCII decimal, e.g. `1000.00`).
+    pub threshold: String,
+    /// The font color when the rule matches; `None` leaves the object's own.
+    pub font_color: Option<Color>,
+    /// The background color when the rule matches; `None` leaves the object's own.
+    pub background_color: Option<Color>,
+}
+
+/// A Highlighting Expert comparison. Only the two seen in the corpus are named, each pinned by a
+/// render of the real engine; any other code is kept raw and never applied, since a rule tested with
+/// the wrong comparison would highlight the wrong values.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum HighlightOperator {
+    /// Code `3`: the value is less than the threshold.
+    LessThan,
+    /// Code `5`: the value is greater than the threshold.
+    GreaterThan,
+    /// Any other code, unapplied.
+    Other(u8),
+}
+
+impl HighlightOperator {
+    /// The operator a stored code names.
+    pub fn from_code(code: u8) -> HighlightOperator {
+        match code {
+            3 => HighlightOperator::LessThan,
+            5 => HighlightOperator::GreaterThan,
+            other => HighlightOperator::Other(other),
+        }
+    }
 }
 
 /// One run within a text-object paragraph — the engine's `ISCRParagraphElement`. A run is either a

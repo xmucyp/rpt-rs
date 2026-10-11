@@ -275,3 +275,110 @@ fn without_the_flag_every_value_keeps_its_symbol() {
         }
     }
 }
+
+// --- Highlighting Expert ---
+
+/// A one-row report whose single field `t.x` carries SalesByCustomer's two rules: under 1000 red on
+/// grey, over 100000 green.
+fn highlighted(value: &str) -> rpt_pages::PagedDocument {
+    use rpt_model::{HighlightOperator, HighlightRule};
+    let red = Color {
+        a: 255,
+        r: 255,
+        g: 0,
+        b: 0,
+    };
+    let grey = Color {
+        a: 255,
+        r: 192,
+        g: 192,
+        b: 192,
+    };
+    let green = Color {
+        a: 255,
+        r: 0,
+        g: 128,
+        b: 0,
+    };
+    let mut report = tiny_report(15840);
+    let mut obj = db_field_object("Amt", "t.x", 0);
+    if let ReportObjectKind::Field(f) = &mut obj.kind {
+        f.highlights = vec![
+            HighlightRule {
+                operator: HighlightOperator::LessThan,
+                threshold: "1000.00".into(),
+                font_color: Some(red),
+                background_color: Some(grey),
+            },
+            HighlightRule {
+                operator: HighlightOperator::GreaterThan,
+                threshold: "100000.00".into(),
+                font_color: Some(green),
+                background_color: None,
+            },
+        ];
+    }
+    report.report_definition.areas[1].sections[0].objects = vec![obj];
+    let saved = SavedData {
+        record_count: 1,
+        columns: vec![SavedColumn {
+            name: "t.x".into(),
+            value_type: FieldValueType::Number,
+        }],
+        rows: vec![vec![Some(value.to_string())]],
+    };
+    rendered(&report, &saved)
+}
+
+/// The color the field's text is drawn in, and the fill behind it.
+fn field_colors(doc: &rpt_pages::PagedDocument) -> (Color, Option<Color>) {
+    let ops = &doc.pages[0].ops;
+    let run = ops
+        .iter()
+        .find_map(|op| match op {
+            DrawOp::Text(t)
+                if t.source
+                    .as_ref()
+                    .is_some_and(|s| s.object_name.as_deref() == Some("Amt")) =>
+            {
+                Some(t)
+            }
+            _ => None,
+        })
+        .expect("the field's run");
+    let fill = ops.iter().find_map(|op| match op {
+        DrawOp::Rect(r)
+            if r.source
+                .as_ref()
+                .is_some_and(|s| s.object_name.as_deref() == Some("Amt")) =>
+        {
+            match r.fill {
+                Some(rpt_pages::Fill::Solid(c)) => Some(c),
+                _ => None,
+            }
+        }
+        _ => None,
+    });
+    (run.color, fill)
+}
+
+#[test]
+fn a_value_under_the_threshold_prints_in_the_rules_colors() {
+    let (color, fill) = field_colors(&highlighted("53.9"));
+    assert_eq!((color.r, color.g, color.b), (255, 0, 0));
+    assert_eq!(fill.map(|c| (c.r, c.g, c.b)), Some((192, 192, 192)));
+}
+
+#[test]
+fn a_value_over_the_threshold_takes_the_second_rule() {
+    let (color, fill) = field_colors(&highlighted("250000"));
+    assert_eq!((color.r, color.g, color.b), (0, 128, 0));
+    assert_eq!(fill, None, "the rule leaves the background alone");
+}
+
+#[test]
+fn a_value_no_rule_matches_keeps_the_objects_colors() {
+    let (color, fill) = field_colors(&highlighted("5000"));
+    assert_eq!((color.r, color.g, color.b), (0, 0, 0));
+    assert_eq!(fill, None);
+}

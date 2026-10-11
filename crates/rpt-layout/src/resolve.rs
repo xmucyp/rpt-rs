@@ -236,7 +236,9 @@ pub(crate) struct CurrencyMark {
 }
 
 /// [`field_text`], plus a [`CurrencyMark`] when the field asks for one currency symbol per page and
-/// the value actually rendered through a currency spec.
+/// the value actually rendered through a currency spec, and the value itself — resolved once, so a
+/// caller that also tests it (a Highlighting Expert rule) does not fire a formula's side effects a
+/// second time. A date group's name, printed from its group, returns [`Value::Null`].
 pub(crate) fn field_text_marked(
     report: &Report,
     obj: &FieldObject,
@@ -244,12 +246,12 @@ pub(crate) fn field_text_marked(
     state: &ResolveState,
     loc: &Locale,
     diag: &DiagSink,
-) -> (String, Option<CurrencyMark>) {
+) -> (String, Option<CurrencyMark>, Value) {
     // A date group's name is printed at the group's own granularity, which no date format spec can
     // express — the period-start key still carries the day the engine drops.
     if obj.ref_kind == FieldRefKind::GroupName {
         if let Some(text) = group_name_display(&obj.data_source, report, state) {
-            return (text, None);
+            return (text, None, Value::Null);
         }
     }
     let value = field_value(report, obj, ctx, state, diag);
@@ -269,7 +271,33 @@ pub(crate) fn field_text_marked(
         }
         _ => None,
     };
-    (text, mark)
+    (text, mark, value)
+}
+
+/// The colors a field's Highlighting Expert rules give `value`: the font and background color of
+/// the first rule it matches, each `None` where that rule leaves the object's own. A non-numeric
+/// value, an unreadable threshold and an operator not named in the model match nothing.
+pub(crate) fn highlight_colors(
+    obj: &FieldObject,
+    value: &Value,
+) -> (Option<rpt_model::Color>, Option<rpt_model::Color>) {
+    use rpt_model::HighlightOperator as Op;
+    let Some(v) = value.as_number() else {
+        return (None, None);
+    };
+    obj.highlights
+        .iter()
+        .find(|h| {
+            let Ok(t) = h.threshold.trim().parse::<f64>() else {
+                return false;
+            };
+            match h.operator {
+                Op::LessThan => v < t,
+                Op::GreaterThan => v > t,
+                Op::Other(_) => false,
+            }
+        })
+        .map_or((None, None), |h| (h.font_color, h.background_color))
 }
 
 /// The display string of a special field named by its bare placeholder (`PageNofM`, `PrintDate`, …),
